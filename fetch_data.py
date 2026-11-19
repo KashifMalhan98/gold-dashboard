@@ -33,12 +33,38 @@ def yf_close(ticker, period="1y"):
     if s.empty: raise ValueError("empty series")
     return s
 
-def fred(series):
-    r = requests.get("https://fred.stlouisfed.org/graph/fredgraph.csv", params={"id": series}, headers=UA, timeout=30)
-    r.raise_for_status()
-    d = pd.read_csv(io.StringIO(r.text))
-    s = pd.Series(pd.to_numeric(d.iloc[:, 1], errors="coerce").values, index=pd.to_datetime(d.iloc[:, 0])).dropna()
-    return s[s.index >= pd.Timestamp.today() - pd.Timedelta(days=500)]
+def fred(series, tries=2, timeout=45):
+    last = None
+    for _ in range(tries):
+        try:
+            r = requests.get("https://fred.stlouisfed.org/graph/fredgraph.csv", params={"id": series}, headers=UA, timeout=timeout)
+            r.raise_for_status()
+            d = pd.read_csv(io.StringIO(r.text))
+            s = pd.Series(pd.to_numeric(d.iloc[:, 1], errors="coerce").values, index=pd.to_datetime(d.iloc[:, 0])).dropna()
+            return s[s.index >= pd.Timestamp.today() - pd.Timedelta(days=500)]
+        except Exception as e:
+            last = e
+    raise last
+
+def treasury_real_yield():
+    """US Treasury daily real yield curve, 10-year. Fallback when FRED is unreachable."""
+    out = []
+    for yr in (pd.Timestamp.today().year - 1, pd.Timestamp.today().year):
+        url = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/"
+               f"{yr}/all?type=daily_treasury_real_yield_curve&field_tdr_date_value={yr}&page&_format=csv")
+        r = requests.get(url, headers=UA, timeout=45); r.raise_for_status()
+        d = pd.read_csv(io.StringIO(r.text))
+        col = next(c for c in d.columns if "10" in str(c))
+        out.append(pd.Series(pd.to_numeric(d[col], errors="coerce").values, index=pd.to_datetime(d.iloc[:, 0])))
+    s = pd.concat(out).dropna().sort_index()
+    if s.empty: raise ValueError("empty Treasury series")
+    return s
+
+def real_yield():
+    try: return fred("DFII10")
+    except Exception as e:
+        log.append(f"INFO FRED real yield unreachable ({type(e).__name__}); trying US Treasury site")
+        return treasury_real_yield()
 
 def cftc():
     r = requests.get("https://publicreporting.cftc.gov/resource/72hh-3qpy.json", headers=UA, timeout=60, params={
@@ -57,7 +83,8 @@ def spdr_tonnes():
     url = "https://www.spdrgoldshares.com/assets/dynamic/GLD/GLD_US_archive_EN.csv"
     r = requests.get(url, headers=UA, timeout=60); r.raise_for_status()
     lines = r.text.splitlines()
-    hi = next(i for i, ln in enumerate(lines[:40]) if "Date" in ln and "Tonnes" in ln)
+    hi = next((i for i, ln in enumerate(lines[:60]) if "Date" in ln and "Tonnes" in ln), None)
+    if hi is None: raise ValueError("SPDR file layout not recognised: " + r.text[:80].replace("\n", " "))
     d = pd.read_csv(io.StringIO("\n".join(lines[hi:])))
     tc = next(c for c in d.columns if "Tonnes" in c and "Trust" in c)
     s = pd.Series(pd.to_numeric(d[tc].astype(str).str.replace(",", ""), errors="coerce").values,
@@ -96,6 +123,15 @@ def gold_sessions():
     h = yf.Ticker("GC=F").history(period="365d", interval="1h", auto_adjust=True)
     if h.empty: raise ValueError("no hourly data")
     return asia_split(h[["Open", "Close"]])
+
+def yf_shares(ticker, days=400):
+    """Historical shares outstanding (millions) from Yahoo: creations/redemptions = ETF flows proxy."""
+    import yfinance as yf
+    sh = yf.Ticker(ticker).get_shares_full(start=(pd.Timestamp.today() - pd.Timedelta(days=days)).strftime("%Y-%m-%d"))
+    if sh is None or len(sh) == 0: raise ValueError("no share-count history")
+    s = pd.Series(sh.values.astype(float), index=pd.to_datetime(sh.index).tz_localize(None).normalize())
+    s = s[~s.index.duplicated(keep="last")].sort_index()
+    return s / 1e6
 
 def yf_snapshot(ticker, field):
     import yfinance as yf
@@ -140,7 +176,9 @@ def build():
     series["gvz"] = safe("gold vol ^GVZ", lambda: yf_close("^GVZ"))
     series["fx"] = safe("USD/INR INR=X", lambda: yf_close("INR=X")) 
     if series["fx"] is None: series["fx"] = safe("USD/INR FRED", lambda: fred("DEXINUS"))
-    series["ry"] = safe("real yield FRED DFII10", lambda: fred("DFII10"))
+    series["ry"] = safe("real yield (FRED, else US Treasury)", real_yield)
+    series["gdx"] = safe("gold miners GDX", lambda: yf_close("GDX"))
+    series["si"] = safe("silver SI=F", lambda: yf_close("SI=F"))
     series["in_px"] = safe("India gold ETF price GOLDBEES.NS", lambda: yf_close("GOLDBEES.NS"))
     series["cnh"] = safe("USD/CNH CNH=X", lambda: yf_close("CNH=X"))
     if series["cnh"] is None: series["cnh"] = safe("USD/CNY CNY=X", lambda: yf_close("CNY=X"))
@@ -152,12 +190,17 @@ def build():
     series["gl_etf"] = safe("global ETF SPDR tonnes", spdr_tonnes)
     state = load_state(); today = pd.Timestamp.today().normalize()
     if series["gl_etf"] is None:
+        series["gl_etf"] = safe("global ETF GLD share-count history (M shares)", lambda: yf_shares("GLD"))
+    if series["gl_etf"] is None:
         v = safe("global ETF GLD shares (snapshot)", lambda: yf_snapshot("GLD", "sharesOutstanding"))
-        if v: state.loc[today, "gl_snap"] = v
+        if v: state.loc[today, "gl_snap"] = v / 1e6
         series["gl_etf"] = state["gl_snap"].dropna() if "gl_snap" in state else None
-    v = safe("India ETF GOLDBEES assets (snapshot)", lambda: yf_snapshot("GOLDBEES.NS", "totalAssets"))
-    if v: state.loc[today, "in_snap"] = v
-    series["in_etf"] = state["in_snap"].dropna() if "in_snap" in state else None
+    series["in_etf"] = safe("India ETF GOLDBEES share-count history (M units)", lambda: yf_shares("GOLDBEES.NS"))
+    if series["in_etf"] is None:
+        v = safe("India ETF GOLDBEES units (snapshot)", lambda: yf_snapshot("GOLDBEES.NS", "sharesOutstanding"))
+        if v is None: v = safe("India ETF GOLDBEES assets (snapshot)", lambda: yf_snapshot("GOLDBEES.NS", "totalAssets"))
+        if v: state.loc[today, "in_snap"] = v
+        series["in_etf"] = state["in_snap"].dropna() if "in_snap" in state else None
     state.index.name = "date"; state.sort_index().to_csv(STATE)
     base = series["gold"]
     if base is None: raise SystemExit("Gold price unavailable; cannot build dashboard\n" + "\n".join(log))
@@ -192,7 +235,7 @@ def lead_lag(df):
     return out or None
 
 # ---------------- scoring ----------------
-def compute(df, news=None, cfg=cfg):
+def compute(df, news=None, cfg=cfg, light=False):
     def col(c): return df[c]
     def v(c, k=0):
         s = df[c]
@@ -204,7 +247,7 @@ def compute(df, news=None, cfg=cfg):
         return None if a is None or b is None or b == 0 else a / b - 1
     sig = []
     def add(key, name, group, latest, change, score, why, fmt, chg_fmt, note=""):
-        spark = [None if pd.isna(x) else round(float(x), 4) for x in df[key].iloc[-40:]] if key in df else []
+        spark = [None if pd.isna(x) else round(float(x), 4) for x in df[key].iloc[-40:]] if (key in df and not light) else []
         sig.append(dict(key=key, name=name, group=group, latest=latest, change=change, score=score,
                         why=why, fmt=fmt, chg_fmt=chg_fmt, note=note, spark=spark))
     # 1 gold
@@ -306,6 +349,30 @@ def compute(df, news=None, cfg=cfg):
     elif gold_sc == 1 and confirmed < 2: verdict = "REBOUND UNCONFIRMED: price alone is not enough"
     elif overall >= cfg["watch_score"]: verdict = "IMPROVING: keep watching"
     else: verdict = "WAIT: outlook has not improved yet"
+    cands = []
+    def ratio_signal(key, name, num):
+        if num not in df: return
+        r = (df[num] / df["gold"]).dropna()
+        sc = None
+        if len(r) > L + S:
+            now_, avg_, prev_ = float(r.iloc[-1]), float(r.iloc[-L:].mean()), float(r.iloc[-1 - S])
+            sc = 1 if (now_ > avg_ and now_ > prev_) else 0 if (now_ < avg_ and now_ < prev_) else 0.5
+        cands.append(dict(key=key, name=name, group="Candidate", score=sc))
+    ratio_signal("c_miners", "Candidate: gold miners beating gold", "gdx")
+    ratio_signal("c_silver", "Candidate: silver beating gold", "si")
+    ctx = {}
+    gs = df["gold"].dropna()
+    if len(gs) >= 60:
+        w = gs.iloc[-250:]; hi, lo, now = float(w.max()), float(w.min()), float(gs.iloc[-1])
+        ctx.update(gold=now, from_high=now / hi - 1, range_pos=(now - lo) / (hi - lo) if hi > lo else None,
+                   vs50=now / float(gs.iloc[-50:].mean()) - 1)
+        if len(gs) >= 200: ctx["vs200"] = now / float(gs.iloc[-200:].mean()) - 1
+        if "fx" in df:
+            inr = (df["gold"] * df["fx"] / 31.1035 * 10).dropna()
+            if len(inr) >= 60:
+                z = inr.iloc[-60:]
+                ctx.update(inr=float(inr.iloc[-1]), inr_chg10=float(inr.iloc[-1] / inr.iloc[-1 - M] - 1),
+                           inr_pos=float((inr.iloc[-1] - z.min()) / (z.max() - z.min())) if z.max() > z.min() else None)
     short = "BUY" if verdict.startswith("BUY") else "WATCH" if verdict.startswith(("IMPROVING", "REBOUND")) else "WAIT"
     gch = pct("gold", M)
     trend = "" if gch is None else f"Gold is {'down' if gch < 0 else 'up'} {abs(gch) * 100:.1f}% over the last 2 weeks" + (f"; {gold_note}." if gold_note else ".")
@@ -321,13 +388,44 @@ def compute(df, news=None, cfg=cfg):
         except ValueError: pass
     return dict(short=short, msg=msg, trend=trend, verdict=verdict, overall=overall, improving=improving, scored=len(scored), total=len(sig),
                 confirmed=confirmed, needed=cfg["groups_needed"], groups=groups, signals=sig, parity=parity,
-                days_to_wedding=days, as_of=str(df.index[-1].date()), lead_lag=lead_lag(df))
+                days_to_wedding=days, as_of=str(df.index[-1].date()), lead_lag=(None if light else lead_lag(df)), cands=cands, context=ctx)
+
+# ---------------- backtest: did each signal actually help? ----------------
+def backtest(df, horizon=10, max_days=200, min_n=20):
+    n = len(df); gold = df["gold"].values
+    recs, names = [], {}
+    for i in range(max(40, n - max_days), n - 1):
+        if i + horizon >= n or np.isnan(gold[i]) or np.isnan(gold[i + horizon]): continue
+        o = compute(df.iloc[:i + 1], ([], None), cfg, light=True)
+        for sg in o["signals"] + o["cands"]: names[sg["key"]] = (sg["name"], sg["group"])
+        sc = {sg["key"]: sg["score"] for sg in o["signals"] + o["cands"]}
+        recs.append((sc, float(gold[i + horizon] / gold[i] - 1), o["short"]))
+    if len(recs) < 40: return None
+    allf = np.array([f for _, f, _ in recs])
+    def stats(x): 
+        x = np.array(x); return (len(x), float(x.mean()) if len(x) else None, float((x > 0).mean()) if len(x) else None)
+    rows = []
+    for key, (nm, grp) in names.items():
+        g = [f for sc, f, _ in recs if sc.get(key) == 1]; r = [f for sc, f, _ in recs if sc.get(key) == 0]
+        ng, mg, hg = stats(g); nr, mr, hr = stats(r)
+        if ng < min_n or nr < min_n: verdict = "too few observations"
+        else:
+            edge, hedge = mg - mr, hg - hr
+            verdict = "helps" if (edge >= 0.01 and hedge >= 0.15) else "backwards" if (edge <= -0.01 and hedge <= -0.15) else "no clear edge"
+        rows.append(dict(key=key, name=nm, candidate=(grp == "Candidate"), n_green=ng, n_red=nr, green_avg=mg, red_avg=mr,
+                         green_hit=hg, red_hit=hr, edge=None if (mg is None or mr is None) else mg - mr, verdict=verdict))
+    buckets = []
+    for b in ("BUY", "WATCH", "WAIT"):
+        nb, mb, hb = stats([f for _, f, sh in recs if sh == b]); buckets.append(dict(name=b, n=nb, avg=mb, hit=hb))
+    return dict(days=len(recs), horizon=horizon, base_avg=float(allf.mean()), base_hit=float((allf > 0).mean()), rows=rows, buckets=buckets)
 
 if __name__ == "__main__":
     df = build()
     news = safe("policy news (Google News RSS)", policy_news)
     out = compute(df, news)
     out["asia_gold_news"] = safe("Reuters Asia Gold headlines", asia_gold_news) or []
+    out["health"] = [f"{c}: last value {df[c].last_valid_index().date() if df[c].last_valid_index() is not None else 'NONE'}, {int(df[c].iloc[-10:].notna().sum())}/10 recent rows filled" for c in df.columns if c in ("gold","dxy","ry","cftc","oi","gl_etf","in_etf","fx","gvz","cnh","sge","sh_prem","asia_ret")]
+    out["backtest"] = safe("backtest of signals", lambda: backtest(df))
     out["updated_utc"] = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M"); out["log"] = log
     (DOCS / "data.json").write_text(json.dumps(out, default=lambda o: None if o is None else str(o)))
     print("\n".join(log)); print("Verdict:", out["verdict"])
