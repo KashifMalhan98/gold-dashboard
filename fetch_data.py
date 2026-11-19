@@ -208,10 +208,11 @@ def compute(df, news=None, cfg=cfg):
         sig.append(dict(key=key, name=name, group=group, latest=latest, change=change, score=score,
                         why=why, fmt=fmt, chg_fmt=chg_fmt, note=note, spark=spark))
     # 1 gold
-    g0 = v("gold")
+    g0 = v("gold"); gold_note = ""
     if g0 is not None and len(df) > L:
         low_r = float(df["gold"].iloc[-S:].min()); low_p = float(df["gold"].iloc[-L:-S].min()); avg = float(df["gold"].iloc[-M:].mean())
         c1, c2 = low_r > low_p, g0 >= avg
+        gold_note = ("it has stopped making new lows" if c1 else "it is still making new lows")
         sc = 1 if (c1 and c2) else 0.5 if (c1 or c2) else 0
     else: sc = None
     add("gold", "Gold price", "Price & positioning", g0, pct("gold", M), sc, "Stops making lower lows and holds a recovery", "usd", "pct")
@@ -305,13 +306,20 @@ def compute(df, news=None, cfg=cfg):
     elif gold_sc == 1 and confirmed < 2: verdict = "REBOUND UNCONFIRMED: price alone is not enough"
     elif overall >= cfg["watch_score"]: verdict = "IMPROVING: keep watching"
     else: verdict = "WAIT: outlook has not improved yet"
+    short = "BUY" if verdict.startswith("BUY") else "WATCH" if verdict.startswith(("IMPROVING", "REBOUND")) else "WAIT"
+    gch = pct("gold", M)
+    trend = "" if gch is None else f"Gold is {'down' if gch < 0 else 'up'} {abs(gch) * 100:.1f}% over the last 2 weeks" + (f"; {gold_note}." if gold_note else ".")
+    msg = {"BUY": "The fall looks over and most indicators agree. Consider buying in stages.",
+           "WATCH": "Signs of a bottom are appearing, but not confirmed yet. Keep waiting a little longer.",
+           "WAIT": "The fall is not showing signs of ending yet. Keep waiting."}[short]
+    if verdict.startswith("REBOUND"): msg = "Price bounced, but other indicators do not confirm it. Do not chase it."
     parity = None
     if g0 and f0: parity = g0 * f0 / 31.1035 * 10 * (1 + cfg["import_duty"]) * (1 + cfg["gst"])
     days = None
     if cfg.get("wedding_date"):
         try: days = (dt.date.fromisoformat(cfg["wedding_date"]) - dt.date.today()).days
         except ValueError: pass
-    return dict(verdict=verdict, overall=overall, improving=improving, scored=len(scored), total=len(sig),
+    return dict(short=short, msg=msg, trend=trend, verdict=verdict, overall=overall, improving=improving, scored=len(scored), total=len(sig),
                 confirmed=confirmed, needed=cfg["groups_needed"], groups=groups, signals=sig, parity=parity,
                 days_to_wedding=days, as_of=str(df.index[-1].date()), lead_lag=lead_lag(df))
 
