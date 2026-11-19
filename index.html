@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Gold Buy-Readiness</title>
+<style>
+:root{--bg:#0f172a;--card:#1e293b;--line:#334155;--txt:#f1f5f9;--mute:#94a3b8;--gold:#f5c542;--g:#4ade80;--a:#fbbf24;--r:#f87171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--txt);font:15px/1.4 -apple-system,Segoe UI,Arial,sans-serif;padding:max(16px,env(safe-area-inset-top)) 16px 32px}
+.wrap{max-width:760px;margin:0 auto}h1{font-size:22px;margin:4px 0 2px;color:var(--gold);letter-spacing:.5px}
+.sub{color:var(--mute);font-size:12px;margin-bottom:14px}
+.hero{border-radius:16px;padding:18px;margin-bottom:14px;border:1px solid var(--line);background:var(--card)}
+.hero.buy{background:#14532d;border-color:#166534}.hero.imp{background:#1e3a2f}.hero.reb{background:#422006}.hero.wait{background:#450a0a}
+.hero .v{font-size:20px;font-weight:700}.hero .s{color:#cbd5e1;font-size:13px;margin-top:6px}.hero .n{color:var(--gold);font-size:13px;margin-top:6px}
+h2{font-size:11px;letter-spacing:1.2px;color:var(--mute);margin:20px 0 8px;font-weight:600}
+.groups{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g{background:var(--card);border-radius:12px;padding:12px}
+.g .t{font-size:12px;color:var(--mute)}.g .p{font-size:22px;font-weight:700;margin:2px 0}.bar{height:6px;border-radius:3px;background:var(--line);overflow:hidden}.bar i{display:block;height:100%;background:var(--gold)}
+.g .st{font-size:11px;font-weight:700;margin-top:6px}
+.sig{background:var(--card);border-radius:12px;padding:12px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;align-items:center}
+.sig .nm{font-weight:600}.sig .why{grid-column:1/2;color:var(--mute);font-size:12px}.sig .val{text-align:right;font-weight:600}
+.sig .chg{text-align:right;color:var(--mute);font-size:12px}
+.pill{grid-row:1/3;grid-column:2;justify-self:end}
+.badge{font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;white-space:nowrap}
+.up{background:#14532d;color:var(--g)}.mid{background:#422006;color:var(--a)}.dn{background:#450a0a;color:var(--r)}.na{background:var(--line);color:var(--mute)}
+.row2{display:flex;justify-content:space-between;align-items:center;gap:8px}
+svg.sp{width:70px;height:22px}
+.note{grid-column:1/3;color:#64748b;font-size:11px}
+.news{font-size:12px;color:var(--mute);margin:4px 0 0;padding-left:16px}
+.foot{color:#64748b;font-size:11px;margin-top:18px;line-height:1.5}
+</style></head><body><div class="wrap">
+<h1>GOLD BUY-READINESS</h1><div class="sub" id="sub">Loading…</div>
+<div id="app"></div>
+<div class="foot" id="foot"></div></div>
+<script>
+const $=id=>document.getElementById(id);
+const nf=(x,d=0)=>x==null?"n/a":Number(x).toLocaleString("en-IN",{minimumFractionDigits:d,maximumFractionDigits:d});
+const FM={usd:x=>"$"+nf(x,2),usd1:x=>(x>=0?"+":"-")+"$"+nf(Math.abs(x),1),pct1:x=>(x*100).toFixed(1)+"%",num4:x=>nf(x,4),num2:x=>nf(x,2),num1:x=>nf(x,1),pct2:x=>nf(x,2)+"%",int:x=>nf(x,0),text:()=>""};
+const CH={pct:x=>(x>=0?"+":"")+(x*100).toFixed(1)+"%",pp:x=>(x>=0?"+":"")+x.toFixed(2)+" pp",int:x=>(x>=0?"+":"")+nf(x,0),usd:x=>(x>=0?"+":"-")+"$"+nf(Math.abs(x),1),none:()=>""};
+function spark(a){a=(a||[]).filter(x=>x!=null);if(a.length<3)return"";const mn=Math.min(...a),mx=Math.max(...a),r=(mx-mn)||1;
+ const p=a.map((v,i)=>(i/(a.length-1)*70).toFixed(1)+","+(20-((v-mn)/r)*18).toFixed(1)).join(" ");
+ return `<svg class="sp" viewBox="0 0 70 22"><polyline points="${p}" fill="none" stroke="#f5c542" stroke-width="1.5"/></svg>`}
+const badge=s=>s==null?'<span class="badge na">NO DATA</span>':s==1?'<span class="badge up">▲ IMPROVING</span>':s==.5?'<span class="badge mid">● NEUTRAL</span>':'<span class="badge dn">▼ WEAKENING</span>';
+fetch("data.json?"+Date.now()).then(r=>r.json()).then(d=>{
+ const v=d.verdict, cls=v.startsWith("BUY")?"buy":v.startsWith("IMP")?"imp":v.startsWith("REB")?"reb":"wait";
+ $("sub").textContent=`Wedding purchase tracker · data as of ${d.as_of} · refreshed ${d.updated_utc} UTC`;
+ let note="";
+ if(d.days_to_wedding!=null){note=d.days_to_wedding<0?"Wedding date has passed":`${d.days_to_wedding} days to wedding`;}
+ let h=`<div class="hero ${cls}"><div class="v">${v}</div><div class="s">${d.improving} of ${d.scored} signals improving · ${d.confirmed} of ${d.groups.length} groups confirming (need ${d.needed}) · score ${Math.round(d.overall*100)}%</div>${note?`<div class="n">${note}</div>`:""}</div>`;
+ h+=`<h2>CONFIRMATION GROUPS</h2><div class="groups">`+d.groups.map(g=>{const p=g.score==null?0:Math.round(g.score*100);
+  const st=g.score==null?["NO DATA","var(--mute)"]:g.score>=.6?["CONFIRMED","var(--g)"]:g.score>=.4?["PARTIAL","var(--a)"]:["NOT YET","var(--r)"];
+  return `<div class="g"><div class="t">${g.name}</div><div class="p">${g.score==null?"–":p+"%"}</div><div class="bar"><i style="width:${p}%"></i></div><div class="st" style="color:${st[1]}">${st[0]}</div></div>`}).join("")+`</div>`;
+ h+=`<h2>SIGNALS</h2>`+d.signals.map(s=>{
+  const val=s.latest==null?"":(FM[s.fmt]||FM.num2)(s.latest), chg=s.change==null?"":(CH[s.chg_fmt]||CH.none)(s.change);
+  let extra=s.note?`<div class="note">${s.note}</div>`:"";
+  if(s.headlines&&s.headlines.length) extra+=`<ul class="news">`+s.headlines.slice(0,3).map(t=>`<li>${t.replace(/</g,"&lt;")}</li>`).join("")+`</ul>`;
+  return `<div class="sig"><div class="nm">${s.name}</div><div class="pill">${badge(s.score)}</div><div class="why">${s.why}</div>
+  <div class="row2" style="grid-column:1/3;margin-top:6px"><span class="val">${val}</span><span class="chg">${chg}</span>${spark(s.spark)}</div>${extra}</div>`}).join("");
+ if(d.lead_lag) h+=`<h2>DOES ASIA LEAD INDIA? (measured, not assumed)</h2><div class="g">`+d.lead_lag.map(x=>`<div class="why" style="color:#cbd5e1;margin-bottom:6px">${x.label} vs Indian gold ETF (GOLDBEES): same-day correlation <b>${x.same}</b>${x.nxt==null?"":`, next-day <b>${x.nxt}</b>`} (${x.n} days)</div>`).join("")+`<div class="note">Next-day near 0 (between -0.2 and 0.2) means no early-warning value for India. Same-day only shows overlap of trading hours.</div></div>`;
+ if(d.asia_gold_news&&d.asia_gold_news.length) h+=`<h2>WEEKLY ASIA PHYSICAL DEMAND (Reuters, context only, not scored)</h2><div class="g"><ul class="news" style="margin:0">`+d.asia_gold_news.map(t=>`<li>${t.replace(/</g,"&lt;")}</li>`).join("")+`</ul><div class="note" style="margin-top:6px">Shows India dealer discount/premium and China/Singapore/Hong Kong premiums each Friday.</div></div>`;
+ if(d.parity) h+=`<h2>INDIA PRICE CHECK</h2><div class="g"><div class="t">Parity price per 10g incl. import duty and GST (excludes dealer premium and making charges)</div><div class="p" style="color:var(--gold)">₹ ${nf(d.parity,0)}</div></div>`;
+ $("app").innerHTML=h;
+ $("foot").innerHTML="A price rebound alone is not enough: the verdict needs several independent groups to improve together. Framework only, not financial advice.<br>Data: Yahoo Finance, FRED, CFTC, SPDR, Shanghai Gold Exchange, Google News. "+(d.log||[]).filter(x=>x.startsWith("FAIL")).map(x=>"<br>⚠ "+x).join("");
+}).catch(e=>{$("sub").textContent="Waiting for the first data refresh (Actions tab → Update gold data → Run workflow).";});
+</script></body></html>
