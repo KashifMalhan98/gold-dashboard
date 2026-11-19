@@ -165,8 +165,10 @@ def build():
     for k, s in series.items():
         if s is None or len(s) == 0: df[k] = np.nan; continue
         s = s[~s.index.duplicated(keep="last")].sort_index()
-        lim = 0 if k in ("asia_ret", "us_ret") else 10
-        df[k] = s.reindex(s.index.union(df.index)).ffill(limit=lim).reindex(df.index)
+        if k in ("asia_ret", "us_ret"):
+            df[k] = s.reindex(df.index)  # per-day values: never carried forward
+        else:
+            df[k] = s.reindex(s.index.union(df.index)).ffill(limit=10).reindex(df.index)
     df["asia_cum"] = df["asia_ret"].fillna(0).cumsum().where(df["asia_ret"].notna().cumsum() > 0)
     df["us_cum"] = df["us_ret"].fillna(0).cumsum().where(df["us_ret"].notna().cumsum() > 0)
     # Shanghai premium/(discount) to international gold, US$/oz. SGE gold quote excludes VAT; approximate (different clocks).
