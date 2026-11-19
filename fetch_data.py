@@ -8,11 +8,17 @@ ROOT = Path(__file__).parent
 DOCS = ROOT / "docs"; DOCS.mkdir(exist_ok=True)
 UA = {"User-Agent": "Mozilla/5.0 (gold-dashboard)"}
 S, M, L = 5, 10, 20  # short / medium / long windows (trading days)
-DEFAULT = {"wedding_date": "", "import_duty": 0.15, "gst": 0.03, "policy_override": "",
-           "buy_score": 0.70, "watch_score": 0.50, "groups_needed": 3}
+DEFAULT = {"wedding_date": "2027-11-19", "import_duty": 0.15, "gst": 0.03, "policy_override": "",
+           "buy_score": 0.70, "watch_score": 0.50, "groups_needed": 3,
+           "exclude_from_score": ["gvz", "in_etf"],
+           "target_grams": 24, "grams_bought": 0, "finish_days_before": 30, "making_charge_pct": 0.0,
+           "events": [{"date": "2026-12-09", "name": "US Fed rate decision (FOMC)"},
+                      {"date": "2027-01-27", "name": "US Fed rate decision (tentative date)"},
+                      {"date": "2027-02-01", "name": "India Union Budget (expected; import duty changes often announced here)"}]}
 cfg = dict(DEFAULT)
 if (ROOT / "config.json").exists():
-    cfg.update(json.loads((ROOT / "config.json").read_text()))
+    for _k, _v in json.loads((ROOT / "config.json").read_text()).items():
+        if _v != "": cfg[_k] = _v   # an empty value in config.json keeps the built-in default
 log = []
 
 def safe(name, fn):
@@ -59,6 +65,20 @@ def treasury_real_yield():
     s = pd.concat(out).dropna().sort_index()
     if s.empty: raise ValueError("empty Treasury series")
     return s
+
+def treasury_nominal():
+    """US Treasury daily nominal yield curve: 2-year and 10-year."""
+    out = []
+    for yr in (pd.Timestamp.today().year - 1, pd.Timestamp.today().year):
+        url = ("https://home.treasury.gov/resource-center/data-chart-center/interest-rates/daily-treasury-rates.csv/"
+               f"{yr}/all?type=daily_treasury_yield_curve&field_tdr_date_value={yr}&page&_format=csv")
+        r = requests.get(url, headers=UA, timeout=45); r.raise_for_status()
+        d = pd.read_csv(io.StringIO(r.text)); d.index = pd.to_datetime(d.iloc[:, 0])
+        out.append(d)
+    d = pd.concat(out).sort_index()
+    c2 = next(c for c in d.columns if str(c).strip().startswith("2 Yr"))
+    c10 = next(c for c in d.columns if str(c).strip().startswith("10 Yr"))
+    return pd.to_numeric(d[c2], errors="coerce").dropna(), pd.to_numeric(d[c10], errors="coerce").dropna()
 
 def real_yield():
     try: return fred("DFII10")
@@ -177,30 +197,26 @@ def build():
     series["fx"] = safe("USD/INR INR=X", lambda: yf_close("INR=X")) 
     if series["fx"] is None: series["fx"] = safe("USD/INR FRED", lambda: fred("DEXINUS"))
     series["ry"] = safe("real yield (FRED, else US Treasury)", real_yield)
+    nom = safe("US 2y and 10y nominal yields (Treasury)", treasury_nominal)
+    series["y2"], series["nom10"] = (nom if nom else (None, None))
+    series["vix"] = safe("VIX ^VIX", lambda: yf_close("^VIX"))
+    series["spx"] = safe("S&P 500 ^GSPC", lambda: yf_close("^GSPC"))
+    series["oil"] = safe("Oil CL=F", lambda: yf_close("CL=F"))
     series["gdx"] = safe("gold miners GDX", lambda: yf_close("GDX"))
     series["si"] = safe("silver SI=F", lambda: yf_close("SI=F"))
     series["in_px"] = safe("India gold ETF price GOLDBEES.NS", lambda: yf_close("GOLDBEES.NS"))
-    series["cnh"] = safe("USD/CNH CNH=X", lambda: yf_close("CNH=X"))
-    if series["cnh"] is None: series["cnh"] = safe("USD/CNY CNY=X", lambda: yf_close("CNY=X"))
+    series["cnh"] = safe("USD/CNY CNY=X", lambda: yf_close("CNY=X"))
+    if series["cnh"] is None: series["cnh"] = safe("USD/CNH CNH=X", lambda: yf_close("CNH=X"))
     series["sge"] = safe("Shanghai SGE Au99.99 (akshare)", sge_close)
     sess = safe("Asia vs US session gold (hourly)", gold_sessions)
     series["asia_ret"], series["us_ret"] = (sess if sess else (None, None))
     c = safe("CFTC managed money + OI", cftc)
     series["cftc"], series["oi"] = (c if c else (None, None))
-    series["gl_etf"] = safe("global ETF SPDR tonnes", spdr_tonnes)
     state = load_state(); today = pd.Timestamp.today().normalize()
-    if series["gl_etf"] is None:
-        series["gl_etf"] = safe("global ETF GLD share-count history (M shares)", lambda: yf_shares("GLD"))
-    if series["gl_etf"] is None:
-        v = safe("global ETF GLD shares (snapshot)", lambda: yf_snapshot("GLD", "sharesOutstanding"))
-        if v: state.loc[today, "gl_snap"] = v / 1e6
-        series["gl_etf"] = state["gl_snap"].dropna() if "gl_snap" in state else None
-    series["in_etf"] = safe("India ETF GOLDBEES share-count history (M units)", lambda: yf_shares("GOLDBEES.NS"))
-    if series["in_etf"] is None:
-        v = safe("India ETF GOLDBEES units (snapshot)", lambda: yf_snapshot("GOLDBEES.NS", "sharesOutstanding"))
-        if v is None: v = safe("India ETF GOLDBEES assets (snapshot)", lambda: yf_snapshot("GOLDBEES.NS", "totalAssets"))
-        if v: state.loc[today, "in_snap"] = v
-        series["in_etf"] = state["in_snap"].dropna() if "in_snap" in state else None
+    v = safe("global ETF GLD shares outstanding (daily snapshot)", lambda: yf_snapshot("GLD", "sharesOutstanding"))
+    if v: state.loc[today, "gl_snap"] = v / 1e6
+    series["gl_etf"] = state["gl_snap"].dropna() if "gl_snap" in state else None
+    series["in_etf"] = None  # no free daily source for Indian gold ETF holdings found
     state.index.name = "date"; state.sort_index().to_csv(STATE)
     base = series["gold"]
     if base is None: raise SystemExit("Gold price unavailable; cannot build dashboard\n" + "\n".join(log))
@@ -215,6 +231,7 @@ def build():
     df["asia_cum"] = df["asia_ret"].fillna(0).cumsum().where(df["asia_ret"].notna().cumsum() > 0)
     df["us_cum"] = df["us_ret"].fillna(0).cumsum().where(df["us_ret"].notna().cumsum() > 0)
     # Shanghai premium/(discount) to international gold, US$/oz. SGE gold quote excludes VAT; approximate (different clocks).
+    df["be10"] = df["nom10"] - df["ry"]   # 10-year breakeven inflation
     df["sh_prem"] = df["sge"] * 31.1035 / df["cnh"] - df["gold"]
     return df
 
@@ -287,11 +304,11 @@ def compute(df, news=None, cfg=cfg, light=False):
     # 6 global ETF
     e0, ech = v("gl_etf"), pct("gl_etf", M)
     sc = None if ech is None else 1 if ech >= 0.002 else 0 if ech <= -0.002 else 0.5
-    add("gl_etf", "Global gold ETFs", "Fund flows", e0, ech, sc, "Continued net inflows", "num1", "pct", "SPDR GLD tonnes (or share-count proxy)")
+    add("gl_etf", "Global gold ETFs", "Fund flows", e0, ech, sc, "Continued net inflows", "num1", "pct", "GLD shares outstanding (M), built from daily snapshots: scores after ~10 trading days")
     # 7 India ETF
     i0, ich = v("in_etf"), pct("in_etf", M)
     sc = None if ich is None else 1 if ich >= 0.002 else 0 if ich <= -0.002 else 0.5
-    add("in_etf", "Indian gold ETFs", "Fund flows", i0, ich, sc, "Continued holdings growth", "int", "pct", "GOLDBEES assets proxy; needs ~10 days of history")
+    add("in_etf", "Indian gold ETFs", "Fund flows", i0, ich, sc, "Continued holdings growth", "int", "pct", "No free daily source found for Indian ETF holdings; not scored")
     # 8 USD/INR
     f0, fch = v("fx"), pct("fx", S)
     sc = None if fch is None else 1 if fch <= 0.003 else 0 if fch >= 0.01 else 0.5
@@ -332,14 +349,16 @@ def compute(df, news=None, cfg=cfg, light=False):
     # 13 yuan
     n0, nch = v("cnh"), pct("cnh", S)
     sc = None if nch is None else 1 if nch <= -0.003 else 0 if nch >= 0.005 else 0.5
-    add("cnh", "Yuan (USD/CNH, added)", "Asia (early read)", n0, nch, sc, "Yuan stable or strengthening supports Chinese gold buying", "num4", "pct")
+    add("cnh", "Yuan (USD/CNY, added)", "Asia (early read)", n0, nch, sc, "Yuan stable or strengthening supports Chinese gold buying", "num4", "pct")
+    ex = set(cfg.get("exclude_from_score", []))
+    for _s in sig: _s["excluded"] = _s["key"] in ex
     # groups
     groups = []
     for gname in ["Price & positioning", "Dollar & rates", "Fund flows", "India-specific", "Asia (early read)"]:
-        sc_ = [s["score"] for s in sig if s["group"] == gname and s["score"] is not None]
+        sc_ = [s["score"] for s in sig if s["group"] == gname and s["score"] is not None and s["key"] not in ex]
         groups.append(dict(name=gname, score=(sum(sc_) / len(sc_)) if sc_ else None, n=len(sc_),
-                           total=sum(1 for s in sig if s["group"] == gname)))
-    scored = [s["score"] for s in sig if s["score"] is not None]
+                           total=sum(1 for s in sig if s["group"] == gname and s["key"] not in ex)))
+    scored = [s["score"] for s in sig if s["score"] is not None and s["key"] not in ex]
     overall = sum(scored) / len(scored) if scored else 0
     confirmed = sum(1 for g in groups if g["score"] is not None and g["score"] >= 0.6)
     gold_sc = sig[0]["score"]
@@ -360,6 +379,25 @@ def compute(df, news=None, cfg=cfg, light=False):
         cands.append(dict(key=key, name=name, group="Candidate", score=sc))
     ratio_signal("c_miners", "Candidate: gold miners beating gold", "gdx")
     ratio_signal("c_silver", "Candidate: silver beating gold", "si")
+    def chg_candidate(key, name, col, thr, up_green, absolute):
+        if col not in df: return
+        x = df[col].dropna(); sc = None
+        if len(x) > M + 1:
+            ch = float(x.iloc[-1] - x.iloc[-1 - M]) if absolute else float(x.iloc[-1] / x.iloc[-1 - M] - 1)
+            ch = ch if up_green else -ch
+            sc = 1 if ch >= thr else 0 if ch <= -thr else 0.5
+        cands.append(dict(key=key, name=name, group="Candidate", score=sc))
+    chg_candidate("c_y2", "Candidate: US 2-year yield falling", "y2", 0.10, False, True)
+    chg_candidate("c_be", "Candidate: breakeven inflation rising", "be10", 0.05, True, True)
+    chg_candidate("c_oil", "Candidate: oil falling", "oil", 0.03, False, False)
+    chg_candidate("c_vix", "Candidate: VIX (stress) falling", "vix", 0.10, False, False)
+    chg_candidate("c_spx", "Candidate: S&P 500 rising", "spx", 0.02, True, False)
+    drivers = []
+    for col, name, unit, absolute in (("y2", "US 2-year yield (rate-hike pressure)", "%", True), ("be10", "10-yr breakeven inflation", "%", True),
+                                      ("oil", "Oil (WTI, US$)", "$", False), ("spx", "S&P 500", "", False), ("vix", "VIX (equity stress)", "", False)):
+        if col in df and df[col].notna().sum() > M + 1:
+            x = df[col].dropna(); now_ = float(x.iloc[-1]); old_ = float(x.iloc[-1 - M])
+            drivers.append(dict(name=name, unit=unit, latest=now_, change=(now_ - old_) if absolute else (now_ / old_ - 1), absolute=absolute))
     ctx = {}
     gs = df["gold"].dropna()
     if len(gs) >= 60:
@@ -386,9 +424,9 @@ def compute(df, news=None, cfg=cfg, light=False):
     if cfg.get("wedding_date"):
         try: days = (dt.date.fromisoformat(cfg["wedding_date"]) - dt.date.today()).days
         except ValueError: pass
-    return dict(short=short, msg=msg, trend=trend, verdict=verdict, overall=overall, improving=improving, scored=len(scored), total=len(sig),
+    return dict(short=short, msg=msg, trend=trend, verdict=verdict, overall=overall, improving=improving, scored=len(scored), total=len([s for s in sig if s['key'] not in ex]),
                 confirmed=confirmed, needed=cfg["groups_needed"], groups=groups, signals=sig, parity=parity,
-                days_to_wedding=days, as_of=str(df.index[-1].date()), lead_lag=(None if light else lead_lag(df)), cands=cands, context=ctx)
+                days_to_wedding=days, as_of=str(df.index[-1].date()), lead_lag=(None if light else lead_lag(df)), cands=cands, context=ctx, drivers=drivers)
 
 # ---------------- backtest: did each signal actually help? ----------------
 def backtest(df, horizon=10, max_days=200, min_n=20):
@@ -419,12 +457,79 @@ def backtest(df, horizon=10, max_days=200, min_n=20):
         nb, mb, hb = stats([f for _, f, sh in recs if sh == b]); buckets.append(dict(name=b, n=nb, avg=mb, hit=hb))
     return dict(days=len(recs), horizon=horizon, base_avg=float(allf.mean()), base_hit=float((allf > 0).mean()), rows=rows, buckets=buckets)
 
+# ---------------- 25-year base rates ----------------
+def base_rates(g):
+    g = g.dropna(); g = g[g > 0]
+    if len(g) < 1500: return None
+    hi = g.rolling(252, min_periods=200).max(); dd = g / hi - 1
+    ma200 = g.rolling(200).mean(); gap = g / ma200 - 1
+    d = g.diff(); up = d.clip(lower=0).rolling(14).mean(); dn = (-d.clip(upper=0)).rolling(14).mean(); rsi = 100 - 100 / (1 + up / dn)
+    hz = {"1 month": 21, "3 months": 63, "6 months": 126, "12 months": 252}
+    fwd = {k: g.shift(-h) / g - 1 for k, h in hz.items()}
+    adverse = (g[::-1].rolling(63, min_periods=20).min()[::-1].shift(-1) / g - 1)
+    conds = [("All days (baseline)", pd.Series(True, index=g.index)),
+             ("20%+ below its 1-year high", dd <= -0.20),
+             ("10%+ below its 200-day average", gap <= -0.10),
+             ("Oversold (RSI below 30)", rsi <= 30),
+             ("20%+ below high AND 10%+ below 200-day", (dd <= -0.20) & (gap <= -0.10))]
+    def episodes(m):
+        pos = np.flatnonzero(m.values)
+        return 0 if len(pos) == 0 else int(1 + (np.diff(pos) > 60).sum())
+    rows = []
+    for name, mask in conds:
+        m = mask & dd.notna()
+        row = dict(name=name, days=int(m.sum()), episodes=episodes(m))
+        for k in hz:
+            x = fwd[k][m].dropna()
+            row[k] = dict(n=int(len(x)), median=float(x.median()) if len(x) else None, pos=float((x > 0).mean()) if len(x) else None,
+                          p10=float(x.quantile(0.10)) if len(x) else None, p90=float(x.quantile(0.90)) if len(x) else None)
+        a = adverse[m].dropna()
+        row["further_drop_median"] = float(a.median()) if len(a) else None
+        row["further_drop_worst10"] = float(a.quantile(0.10)) if len(a) else None
+        rows.append(row)
+    return dict(since=str(g.index[0].date()), now=dict(from_high=float(dd.iloc[-1]), vs200=float(gap.iloc[-1]), rsi=float(rsi.iloc[-1])), rows=rows)
+
+# ---------------- staged-buy plan ----------------
+def make_plan(out, cfg):
+    import math
+    today = dt.date.today()
+    try: wd = dt.date.fromisoformat(cfg["wedding_date"])
+    except Exception: return None
+    finish = wd - dt.timedelta(days=int(cfg["finish_days_before"]))
+    days_left = (finish - today).days
+    target, bought = float(cfg["target_grams"]), float(cfg["grams_bought"])
+    remaining = max(0.0, target - bought)
+    months_left = max(1, math.ceil(max(days_left, 0) / 30.4))
+    base = remaining / months_left
+    mult = {"BUY": 1.5, "WATCH": 1.0, "WAIT": 0.5}[out["short"]]
+    suggest = remaining if months_left <= 1 else min(remaining, base * mult)
+    upcoming = []
+    for e in cfg.get("events", []):
+        try: ed = dt.date.fromisoformat(e["date"])
+        except Exception: continue
+        if 0 <= (ed - today).days <= 90: upcoming.append(dict(date=e["date"], name=e["name"], days=(ed - today).days))
+    upcoming.sort(key=lambda e: e["days"])
+    hold = next((e for e in upcoming if e["days"] <= 3), None) if months_left > 1 else None
+    if hold: suggest = 0.0
+    price10 = out.get("parity"); per_g = price10 / 10 * (1 + float(cfg["making_charge_pct"])) if price10 else None
+    gv = next((s["latest"] for s in out["signals"] if s["key"] == "gvz" and s["latest"]), None)
+    sig_m = gv / 100 / math.sqrt(12) if gv else None
+    return dict(target=target, bought=bought, remaining=remaining, finish=str(finish), wedding=str(wd), days_left=days_left,
+                months_left=months_left, base_per_month=base, multiplier=mult, suggest=round(suggest, 1),
+                suggest_cost=None if per_g is None else suggest * per_g, remaining_cost=None if per_g is None else remaining * per_g,
+                per_gram=per_g, hold=hold, upcoming=upcoming[:4],
+                swing_1m=None if (sig_m is None or per_g is None) else remaining * per_g * sig_m,
+                swing_3m=None if (sig_m is None or per_g is None) else remaining * per_g * sig_m * math.sqrt(3))
+
 if __name__ == "__main__":
     df = build()
     news = safe("policy news (Google News RSS)", policy_news)
     out = compute(df, news)
     out["asia_gold_news"] = safe("Reuters Asia Gold headlines", asia_gold_news) or []
-    out["health"] = [f"{c}: last value {df[c].last_valid_index().date() if df[c].last_valid_index() is not None else 'NONE'}, {int(df[c].iloc[-10:].notna().sum())}/10 recent rows filled" for c in df.columns if c in ("gold","dxy","ry","cftc","oi","gl_etf","in_etf","fx","gvz","cnh","sge","sh_prem","asia_ret")]
+    out["health"] = [f"{c}: last value {df[c].last_valid_index().date() if df[c].last_valid_index() is not None else 'NONE'}, {int(df[c].iloc[-10:].notna().sum())}/10 recent rows filled" for c in df.columns if c in ("gold","dxy","ry","y2","nom10","be10","vix","spx","oil","gdx","si","cftc","oi","gl_etf","fx","gvz","cnh","sge","sh_prem","asia_ret")]
+    long_g = safe("gold long history (25y) GC=F", lambda: yf_close("GC=F", period="max"))
+    out["base_rates"] = safe("25-year base rates", lambda: base_rates(long_g)) if long_g is not None else None
+    out["plan"] = safe("staged-buy plan", lambda: make_plan(out, cfg))
     out["backtest"] = safe("backtest of signals", lambda: backtest(df))
     out["updated_utc"] = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M"); out["log"] = log
     (DOCS / "data.json").write_text(json.dumps(out, default=lambda o: None if o is None else str(o)))
