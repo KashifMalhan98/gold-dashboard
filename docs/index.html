@@ -44,7 +44,8 @@ fetch("data.json?"+Date.now()).then(r=>r.json()).then(d=>{
  $("sub").textContent=`Wedding purchase tracker · data as of ${d.as_of} · refreshed ${d.updated_utc} UTC`;
  let note="";
  if(d.days_to_wedding!=null){note=d.days_to_wedding<0?"Wedding date has passed":`${d.days_to_wedding} days to wedding`;}
- let h=`<div class="hero ${cls}"><div class="v">${v}</div><div class="s">${d.improving} of ${d.scored} signals improving · ${d.confirmed} of ${d.groups.length} groups confirming (need ${d.needed}) · score ${Math.round(d.overall*100)}%</div>${note?`<div class="n">${note}</div>`:""}</div>`;
+ const sh=d.short||v, cls2=sh=="BUY"?"buy":sh=="WATCH"?"reb":"wait";
+ let h=`<div class="hero ${cls2}"><div class="v" style="font-size:34px;letter-spacing:1px">${sh}</div><div class="s" style="font-size:15px;color:#f1f5f9">${d.msg||""}</div><div class="s">${d.trend||""}</div><div class="s" style="opacity:.7">${d.improving} of ${d.scored} indicators say the fall is ending. A BUY needs about 70% and 3 of ${d.groups.length} groups agreeing (now ${Math.round(d.overall*100)}%, ${d.confirmed} groups).</div>${note?`<div class="n">${note}</div>`:""}</div>`;
  h+=`<h2>CONFIRMATION GROUPS</h2><div class="groups">`+d.groups.map(g=>{const p=g.score==null?0:Math.round(g.score*100);
   const st=g.score==null?["NO DATA","var(--mute)"]:g.score>=.6?["CONFIRMED","var(--g)"]:g.score>=.4?["PARTIAL","var(--a)"]:["NOT YET","var(--r)"];
   return `<div class="g"><div class="t">${g.name}</div><div class="p">${g.score==null?"–":p+"%"}</div><div class="bar"><i style="width:${p}%"></i></div><div class="st" style="color:${st[1]}">${st[0]}</div></div>`}).join("")+`</div>`;
