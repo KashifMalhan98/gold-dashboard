@@ -1,13 +1,13 @@
 {
   "short": "UNCONFIRMED",
   "msg": "The available indicators do not yet confirm stabilisation.",
-  "trend": "Gold is down 12.2% over the last 2 weeks; it is still making new lows.",
+  "trend": "Gold is down 12.9% over the last 2 weeks; it is still making new lows.",
   "verdict": "WAIT: outlook has not improved yet",
-  "overall": 0.3,
-  "improving": 2,
-  "scored": 10,
+  "overall": 0.4444444444444444,
+  "improving": 3,
+  "scored": 9,
   "total": 12,
-  "confirmed": 0,
+  "confirmed": 1,
   "needed": 3,
   "groups": [
     {
@@ -30,13 +30,13 @@
     },
     {
       "name": "India-specific",
-      "score": 0.5,
-      "n": 2,
+      "score": 1.0,
+      "n": 1,
       "total": 3
     },
     {
       "name": "Asia (early read)",
-      "score": 0.16666666666666666,
+      "score": 0.5,
       "n": 3,
       "total": 3
     }
@@ -46,8 +46,8 @@
       "key": "gold",
       "name": "Gold price",
       "group": "Price & positioning",
-      "latest": 3576.39990234375,
-      "change": -0.12233429334381418,
+      "latest": 3547.39990234375,
+      "change": -0.12945103257545032,
       "score": 0,
       "why": "Stops making lower lows and holds a recovery",
       "fmt": "usd",
@@ -93,7 +93,7 @@
         3864.2,
         3741.8999,
         3685.5,
-        3576.3999
+        3547.3999
       ],
       "excluded": false
     },
@@ -101,8 +101,8 @@
       "key": "dxy",
       "name": "US dollar",
       "group": "Dollar & rates",
-      "latest": 103.80699920654297,
-      "change": 0.01473114476861448,
+      "latest": 103.74700164794922,
+      "change": 0.014144658387344355,
       "score": 0,
       "why": "Sustained weakening",
       "fmt": "num2",
@@ -148,7 +148,7 @@
         103.49,
         103.86,
         103.9,
-        103.807
+        103.747
       ],
       "excluded": false
     },
@@ -486,8 +486,8 @@
       "key": "gvz",
       "name": "Gold volatility (added)",
       "group": "Price & positioning",
-      "latest": 28.700000762939453,
-      "change": 0.13214991444017898,
+      "latest": 33.099998474121094,
+      "change": 0.30571984126345186,
       "score": 0,
       "why": "Calming: below 1-month average, not rising",
       "fmt": "num1",
@@ -533,7 +533,7 @@
         26.46,
         28.04,
         28.7,
-        28.7
+        33.1
       ],
       "excluded": true
     },
@@ -557,18 +557,13 @@
       "group": "India-specific",
       "latest": null,
       "change": null,
-      "score": 0.0,
+      "score": null,
       "why": "Clarity on import duty",
       "fmt": "text",
       "chg_fmt": "none",
       "note": "Auto-read from news headlines (keyword heuristic). Override in config.json",
       "spark": [],
-      "headlines": [
-        "High Customs Duty, Ponzi Gold Loans: Why India's Gold Regulation Needs a Reset - The Quint",
-        "Customs duty hike takes the shine off organised gold trade; smuggling rises - Business Standard",
-        "India gold market update: Gold demand gets festive boost | Post by Kavita Chacko | Insights - World Gold Council",
-        "Gold prices crash 24% globally but fall only 20% in India: Why domestic buyers aren't seeing the full price correction - Livemint"
-      ],
+      "headlines": [],
       "excluded": false
     },
     {
@@ -630,9 +625,9 @@
       "key": "sh_prem",
       "name": "Shanghai premium (added)",
       "group": "Asia (early read)",
-      "latest": -14.35968308540032,
-      "change": -33.482977357315576,
-      "score": 0,
+      "latest": 22.554574155498358,
+      "change": 3.4312798835831018,
+      "score": 1,
       "why": "Premium rising / back above zero = Chinese physical demand returning",
       "fmt": "usd1",
       "chg_fmt": "usd",
@@ -677,7 +672,7 @@
         21.2873,
         41.296,
         55.4007,
-        -14.3597
+        22.5546
       ],
       "excluded": false
     },
@@ -685,8 +680,8 @@
       "key": "cnh",
       "name": "Yuan (USD/CNY, added)",
       "group": "Asia (early read)",
-      "latest": 6.676000118255615,
-      "change": 0.0008395261852607305,
+      "latest": 6.661200046539307,
+      "change": -0.0013792420145111173,
       "score": 0.5,
       "why": "Yuan stable or strengthening supports Chinese gold buying",
       "fmt": "num4",
@@ -732,21 +727,21 @@
         6.6642,
         6.6659,
         6.6676,
-        6.676
+        6.6612
       ],
       "excluded": false
     }
   ],
-  "parity": 126201.40518695905,
+  "parity": 125178.07422555752,
   "rates": {
-    "gold_usd": 3576.39990234375,
+    "gold_usd": 3547.39990234375,
     "usdinr": 92.66000366210938,
     "source": "gold futures",
-    "base24": 10654.403139464674,
-    "p24_ex": 12252.563610384374,
-    "p22_ex": 11416.279596607294,
-    "p22_gst": 11758.767984505512,
-    "p22_all": 11758.767984505512,
+    "base24": 10568.009643356481,
+    "p24_ex": 12153.211089859953,
+    "p22_ex": 11323.70826304791,
+    "p22_gst": 11663.419510939348,
+    "p22_all": 11663.419510939348,
     "duty": 0.15,
     "gst": 0.03,
     "making": 0.0,
@@ -761,7 +756,7 @@
   },
   "n_all": 14,
   "n_excluded": 2,
-  "n_nodata": 2,
+  "n_nodata": 3,
   "as_of": "2026-11-20",
   "lead_lag": [
     {
@@ -773,7 +768,7 @@
     {
       "label": "Shanghai premium change",
       "n": 238,
-      "same": 0.36,
+      "same": 0.35,
       "nxt": -0.4
     }
   ],
@@ -822,13 +817,13 @@
     }
   ],
   "context": {
-    "gold": 3576.39990234375,
-    "from_high": -0.3275421239445201,
+    "gold": 3547.39990234375,
+    "from_high": -0.3329948917943427,
     "range_pos": 0.0,
-    "vs50": -0.13027028215099612,
-    "vs200": -0.19540796997836718,
-    "inr": 11416.279596607294,
-    "inr_chg10": -0.13904875872985367,
+    "vs50": -0.13720097484808746,
+    "vs200": -0.20190614110332328,
+    "inr": 11323.70826304791,
+    "inr_chg10": -0.14602996516050804,
     "inr_pos": 0.0
   },
   "drivers": [
@@ -849,22 +844,22 @@
     {
       "name": "Oil (WTI, US$)",
       "unit": "$",
-      "latest": 80.97000122070312,
-      "change": -0.10855444689620652,
+      "latest": 81.70999908447266,
+      "change": -0.10040738261291005,
       "absolute": false
     },
     {
       "name": "S&P 500",
       "unit": "",
-      "latest": 7175.830078125,
-      "change": -0.027251403562223997,
+      "latest": 7064.6298828125,
+      "change": -0.042325594664322286,
       "absolute": false
     },
     {
       "name": "VIX (equity stress)",
       "unit": "",
-      "latest": 29.799999237060547,
-      "change": 0.16224648777065154,
+      "latest": 29.81999969482422,
+      "change": 0.16302653684396584,
       "absolute": false
     }
   ],
@@ -1031,11 +1026,11 @@
       {
         "name": "us_ret",
         "status": "FRESH",
-        "last_date": "2026-11-19",
-        "age_days": 1,
-        "recent_filled": 9,
+        "last_date": "2026-11-20",
+        "age_days": 0,
+        "recent_filled": 10,
         "recent_total": 10,
-        "coverage": 0.996
+        "coverage": 1.0
       },
       {
         "name": "cftc",
@@ -1115,18 +1110,20 @@
     ],
     "critical_stale": [],
     "failed_sources": [
-      "FAIL spot gold XAUUSD=X: ValueError: empty series"
+      "FAIL spot gold XAUUSD=X: ValueError: empty series",
+      "FAIL policy news (Google News RSS): HTTPError: 503 Server Error: Service Unavailable for url: https://news.google.com/rss/search?q=India+gold+import+duty+when%3A14d&hl=en-IN&gl=IN&ceid=IN%3Aen",
+      "FAIL Reuters Asia Gold headlines: HTTPError: 503 Server Error: Service Unavailable for url: https://news.google.com/rss/search?q=%22Asia+Gold%22+Reuters+physical+gold+India+discount+when%3A14d&hl=en-IN&gl=IN&ceid=IN%3Aen"
     ]
   },
   "diagnostics": {
-    "available": 10,
-    "missing": 2,
+    "available": 9,
+    "missing": 3,
     "excluded": 2,
-    "bullish": 2,
-    "bearish": 6,
+    "bullish": 3,
+    "bearish": 4,
     "neutral": 2,
     "groups_available": 4,
-    "groups_confirmed": 0,
+    "groups_confirmed": 1,
     "conflicting": true,
     "note": "Signal strength and data reliability are separate. Missing or stale inputs can materially weaken interpretation."
   },
@@ -1148,7 +1145,7 @@
     "cnh: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
     "sge: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
     "asia_ret: FRESH, last observation 2026-11-20, 10/10 recent rows, 99% coverage",
-    "us_ret: FRESH, last observation 2026-11-19, 9/10 recent rows, 100% coverage",
+    "us_ret: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
     "cftc: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
     "oi: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
     "gl_etf: FRESH, last observation 2026-11-20, 2/10 recent rows, 1% coverage",
@@ -1161,9 +1158,9 @@
   "base_rates": {
     "since": "2000-08-30",
     "now": {
-      "from_high": -0.32741046868629264,
-      "vs200": -0.19525107904896588,
-      "rsi": 26.700708566976473
+      "from_high": -0.33320169337673977,
+      "vs200": -0.20215259897749538,
+      "rsi": 25.75879721012612
     },
     "rows": [
       {
@@ -1234,7 +1231,7 @@
           "p90": 0.41792035394079036
         },
         "further_drop_median": -0.04954549635045069,
-        "further_drop_worst10": -0.12974136177150686
+        "further_drop_worst10": -0.13007880292545465
       },
       {
         "name": "10%+ below its 200-day average",
@@ -1346,7 +1343,7 @@
   "backtest": {
     "days": 190,
     "horizon": 10,
-    "base_avg": -0.012549767137011803,
+    "base_avg": -0.012587223659283572,
     "base_hit": 0.3368421052631579,
     "rows": [
       {
@@ -1355,11 +1352,11 @@
         "candidate": false,
         "n_green": 60,
         "n_red": 73,
-        "green_avg": -0.0031603799065461533,
+        "green_avg": -0.0032789922270734222,
         "red_avg": -0.00781915588660304,
         "green_hit": 0.43333333333333335,
         "red_hit": 0.3698630136986301,
-        "edge": 0.004658775980056887,
+        "edge": 0.004540163659529618,
         "verdict": "no clear edge"
       },
       {
@@ -1395,10 +1392,10 @@
         "n_green": 117,
         "n_red": 68,
         "green_avg": -0.015020987527045934,
-        "red_avg": -0.008864878067253433,
+        "red_avg": -0.008969535997130436,
         "green_hit": 0.3162393162393162,
         "red_hit": 0.36764705882352944,
-        "edge": -0.006156109459792501,
+        "edge": -0.006051451529915498,
         "verdict": "no clear edge"
       },
       {
@@ -1407,11 +1404,11 @@
         "candidate": false,
         "n_green": 65,
         "n_red": 7,
-        "green_avg": -0.014648058894556571,
+        "green_avg": -0.014757547190427897,
         "red_avg": -0.03290186308534034,
         "green_hit": 0.27692307692307694,
         "red_hit": 0.0,
-        "edge": 0.01825380419078377,
+        "edge": 0.018144315894912444,
         "verdict": "too few observations"
       },
       {
@@ -1446,11 +1443,11 @@
         "candidate": false,
         "n_green": 111,
         "n_red": 32,
-        "green_avg": -0.011683401212275332,
+        "green_avg": -0.011747515980127911,
         "red_avg": -0.002842994954907349,
         "green_hit": 0.36036036036036034,
         "red_hit": 0.40625,
-        "edge": -0.008840406257367983,
+        "edge": -0.008904521025220562,
         "verdict": "no clear edge"
       },
       {
@@ -1512,10 +1509,10 @@
         "n_green": 93,
         "n_red": 93,
         "green_avg": -0.009246691936467289,
-        "red_avg": -0.016101364847191605,
+        "red_avg": -0.016177888924951134,
         "green_hit": 0.3655913978494624,
         "red_hit": 0.3118279569892473,
-        "edge": 0.006854672910724316,
+        "edge": 0.006931196988483846,
         "verdict": "no clear edge"
       },
       {
@@ -1537,11 +1534,11 @@
         "candidate": true,
         "n_green": 67,
         "n_red": 86,
-        "green_avg": -0.005938238609948538,
+        "green_avg": -0.0060444585984804206,
         "red_avg": -0.020234953702281136,
         "green_hit": 0.373134328358209,
         "red_hit": 0.313953488372093,
-        "edge": 0.014296715092332598,
+        "edge": 0.014190495103800715,
         "verdict": "no clear edge"
       },
       {
@@ -1563,11 +1560,11 @@
         "candidate": true,
         "n_green": 24,
         "n_red": 67,
-        "green_avg": -0.00779334936272726,
+        "green_avg": -0.008089880164045432,
         "red_avg": -0.01884473221504082,
         "green_hit": 0.375,
         "red_hit": 0.2537313432835821,
-        "edge": 0.011051382852313562,
+        "edge": 0.010754852050995389,
         "verdict": "no clear edge"
       },
       {
@@ -1577,10 +1574,10 @@
         "n_green": 37,
         "n_red": 42,
         "green_avg": -0.03423459922885639,
-        "red_avg": -0.020955439414671876,
+        "red_avg": -0.021124885586853687,
         "green_hit": 0.24324324324324326,
         "red_hit": 0.30952380952380953,
-        "edge": -0.013279159814184514,
+        "edge": -0.013109713642002703,
         "verdict": "no clear edge"
       },
       {
@@ -1589,11 +1586,11 @@
         "candidate": true,
         "n_green": 59,
         "n_red": 86,
-        "green_avg": -0.020614497828919585,
+        "green_avg": -0.020735120527760872,
         "red_avg": -0.011722469296811458,
         "green_hit": 0.2711864406779661,
         "red_hit": 0.38372093023255816,
-        "edge": -0.008892028532108126,
+        "edge": -0.009012651230949414,
         "verdict": "no clear edge"
       },
       {
@@ -1603,10 +1600,10 @@
         "n_green": 37,
         "n_red": 45,
         "green_avg": -0.006573620547974376,
-        "red_avg": -0.020989881600785812,
+        "red_avg": -0.021148031361488837,
         "green_hit": 0.32432432432432434,
         "red_hit": 0.37777777777777777,
-        "edge": 0.014416261052811435,
+        "edge": 0.01457441081351446,
         "verdict": "no clear edge"
       },
       {
@@ -1616,10 +1613,10 @@
         "n_green": 43,
         "n_red": 22,
         "green_avg": -0.004787044717496712,
-        "red_avg": -0.006404444382832159,
+        "red_avg": -0.006727932529724711,
         "green_hit": 0.32558139534883723,
         "red_hit": 0.5454545454545454,
-        "edge": 0.0016173996653354467,
+        "edge": 0.001940887812227999,
         "verdict": "no clear edge"
       }
     ],
@@ -1659,7 +1656,7 @@
     "helps": 0,
     "tested": 8
   },
-  "updated_utc": "2026-11-20 10:18",
+  "updated_utc": "2026-11-20 16:32",
   "log": [
     "OK   gold GC=F",
     "FAIL spot gold XAUUSD=X: ValueError: empty series",
@@ -1680,9 +1677,9 @@
     "OK   Asia vs US session gold (hourly)",
     "OK   CFTC managed money + OI",
     "OK   global ETF GLD shares outstanding (daily snapshot)",
-    "OK   policy news (Google News RSS)",
+    "FAIL policy news (Google News RSS): HTTPError: 503 Server Error: Service Unavailable for url: https://news.google.com/rss/search?q=India+gold+import+duty+when%3A14d&hl=en-IN&gl=IN&ceid=IN%3Aen",
     "OK   IBJA official rates (ibjarates.com)",
-    "OK   Reuters Asia Gold headlines",
+    "FAIL Reuters Asia Gold headlines: HTTPError: 503 Server Error: Service Unavailable for url: https://news.google.com/rss/search?q=%22Asia+Gold%22+Reuters+physical+gold+India+discount+when%3A14d&hl=en-IN&gl=IN&ceid=IN%3Aen",
     "OK   data quality report",
     "OK   gold long history (25y) GC=F",
     "OK   25-year base rates",
