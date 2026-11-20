@@ -86,7 +86,9 @@ function arrangePanels(){
  names.forEach((name,i)=>{const btn=document.createElement("button");btn.className="navtab"+(i===0?" active":"");btn.type="button";btn.textContent=name;btn.setAttribute("role","tab");btn.setAttribute("aria-selected",i===0?"true":"false");const panel=document.createElement("section");panel.className="panel"+(i===0?" active":"");panel.dataset.panel=name;panel.setAttribute("role","tabpanel");(map[name]||[]).forEach(n=>panel.appendChild(n));
  btn.addEventListener("click",()=>{nav.querySelectorAll(".navtab").forEach(b=>{b.classList.remove("active");b.setAttribute("aria-selected","false")});app.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));btn.classList.add("active");btn.setAttribute("aria-selected","true");panel.classList.add("active");});nav.appendChild(btn);app.appendChild(panel);});
 }
-fetch("data.json?"+Date.now()).then(r=>{if(!r.ok)throw new Error(`data.json HTTP ${r.status}`);return r.json()}).then(d=>{
+const controller=new AbortController();
+const fetchTimer=setTimeout(()=>controller.abort(),15000);
+fetch("data.json?"+Date.now(),{signal:controller.signal}).then(r=>{if(!r.ok)throw new Error(`data.json HTTP ${r.status}`);return r.json()}).then(d=>{clearTimeout(fetchTimer);
  const v=d.verdict, cls=v.startsWith("BUY")?"buy":v.startsWith("IMP")?"imp":v.startsWith("REB")?"reb":"wait";
  $("sub").textContent=`Market data as of ${d.as_of} · refreshed ${d.updated_utc} UTC`;
  let note="";
@@ -98,6 +100,4 @@ fetch("data.json?"+Date.now()).then(r=>{if(!r.ok)throw new Error(`data.json HTTP
  `<div class="s" style="opacity:.85">${d.improving} of ${d.scored} checks are supportive (${Math.round(d.overall*100)}%). ${d.confirmed} of ${d.groups.length} groups meet the confirmation threshold. ${cnt}</div>`+
  (o?`<div class="s" style="opacity:.85">Odds from history (not a prediction): in ${o.episodes} similar past episodes, gold was higher 3 months later ${pct0(o.p3)} of the time and 12 months later ${pct0(o.p12)}.</div>`:"")+
  `<div class="s" style="opacity:.85">Confidence in our checks: <b>${cf.level||"LOW"}</b>${cf.tested?` (${cf.helps} of ${cf.tested} tested checks have proven useful so far)`:""}.</div>`+
- `${note?`<div class="n">${note}</div>`:""}${info(IX.hero)}</div>`;
-// Personal purchase-plan outputs are intentionally not rendered; this is a market monitor.
- const dq=d.data_qua
+ `${note?`<div class="n">${no
