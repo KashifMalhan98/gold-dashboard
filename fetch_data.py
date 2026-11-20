@@ -28,6 +28,58 @@ def safe(name, fn):
         log.append(f"FAIL {name}: {type(e).__name__}: {e}")
         return None
 
+
+def append_csv_records(path, records):
+    """Append structured observations to CSV, creating a header when needed."""
+    if not records:
+        return
+    normalized = []
+    for record in records:
+        normalized.append({k: (json.dumps(v, ensure_ascii=False, default=str) if isinstance(v, (dict, list, tuple)) else v)
+                          for k, v in record.items()})
+    frame = pd.DataFrame(normalized)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    frame.to_csv(path, mode="a", index=False, header=not path.exists())
+
+def write_audit_logs(df, out, run_id):
+    """Persist market observations, signal states, and a full per-run audit record."""
+    now = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
+    # Capture the latest available input row per run; historical source series are
+    # already used by the backtest and repeating them on every refresh would bloat logs.
+    market_rows = []
+    if df is not None and not df.empty:
+        ix, row = df.iloc[-1].name, df.iloc[-1]
+        rec = {"run_id": run_id, "logged_utc": now, "observation_date": str(ix)}
+        rec.update({k: (None if pd.isna(v) else v) for k, v in row.items()})
+        market_rows.append(rec)
+    append_csv_records(DOCS / "market_history.csv", market_rows)
+
+    signal_rows = []
+    categories = [("signal", out.get("signals", [])), ("candidate", out.get("cands", [])),
+                  ("group", out.get("groups", []))]
+    for category, items in categories:
+        for item in items or []:
+            signal_rows.append({"run_id": run_id, "logged_utc": now, "category": category,
+                               "key": item.get("key"), "name": item.get("name"),
+                               "group": item.get("group"), "score": item.get("score"),
+                               "excluded": item.get("excluded"), "verdict": item.get("verdict"),
+                               "details_json": item})
+    append_csv_records(DOCS / "signal_history.csv", signal_rows)
+
+    run_record = {"run_id": run_id, "logged_utc": now, "updated_utc": out.get("updated_utc"),
+                  "verdict": out.get("verdict"), "short": out.get("short"),
+                  "overall": out.get("overall"), "diagnostics": out.get("diagnostics"),
+                  "data_quality": out.get("data_quality"), "health": out.get("health"),
+                  "signal_count": len(out.get("signals", [])), "candidate_count": len(out.get("cands", [])),
+                  "group_count": len(out.get("groups", [])), "signals": out.get("signals", []),
+                  "candidates": out.get("cands", []), "groups": out.get("groups", []),
+                  "log": out.get("log", []), "backtest": out.get("backtest"),
+                  "base_rates": out.get("base_rates"), "confidence": out.get("confidence"),
+                  "odds": out.get("odds"), "ibja": out.get("ibja"),
+                  "source_data_latest": (df.iloc[-1].to_dict() if df is not None and not df.empty else {})}
+    with (DOCS / "run_history.jsonl").open("a", encoding="utf-8") as f:
+        f.write(json.dumps(run_record, ensure_ascii=False, default=str) + "\n")
+
 # ---------------- fetchers ----------------
 def yf_close(ticker, period="1y"):
     import yfinance as yf
@@ -183,36 +235,94 @@ def asia_gold_news():
 
 # ---------------- IBJA official benchmark (ibjarates.com) ----------------
 IBJA_FILE = DOCS / "ibja_history.csv"
+IBJA_LOG = DOCS / "ibja_scrape.log"
+IBJA_DEBUG_HTML = DOCS / "ibja_last_response.html"
+
+def ibja_log(message, append=True):
+    stamp = dt.datetime.now().astimezone().isoformat(timespec="seconds")
+    with IBJA_LOG.open("a" if append else "w", encoding="utf-8") as f:
+        f.write(f"[{stamp}] {message}\n")
+
 def ibja_scrape():
-    """Parse the public IBJA page: AM and PM tables of recent dates (rates per 10 g, before GST)."""
-    r = requests.get("https://ibjarates.com/index.aspx", headers=UA, timeout=45); r.raise_for_status()
-    t = re.sub(r"(?is)<(script|style).*?</\1>", " ", r.text)
-    t = re.sub(r"(?i)</t[dh]>", " ", t); t = re.sub(r"(?i)</tr>|<br\s*/?>|</h\d>|</div>|</li>", "\n", t)
+    """Fetch and parse IBJA public AM/PM tables; log diagnostics and preserve response HTML."""
+    urls = ["https://ibjarates.com/", "https://ibjarates.com/index.aspx"]
+    last_error = None
+    response = None
+    ibja_log("=" * 72)
+    ibja_log("IBJA scrape started")
+    for url in urls:
+        try:
+            ibja_log(f"REQUEST url={url}")
+            r = requests.get(url, headers=UA, timeout=45)
+            ibja_log(f"RESPONSE status={r.status_code} final_url={r.url} content_type={r.headers.get('Content-Type')} bytes={len(r.content)}")
+            # Capture even non-2xx pages (e.g. 403 challenge pages) so failures can be inspected.
+            try:
+                IBJA_DEBUG_HTML.write_text(r.text, encoding="utf-8")
+                ibja_log(f"HTML response snapshot saved from {url}: {IBJA_DEBUG_HTML.relative_to(ROOT)}")
+                preview = re.sub(r"[\r\n]+", " | ", r.text)[:6000]
+                ibja_log(f"HTTP_RESPONSE_PREVIEW={preview}")
+            except Exception as snapshot_error:
+                ibja_log(f"HTML snapshot/preview failed: {type(snapshot_error).__name__}: {snapshot_error}")
+            r.raise_for_status()
+            if not r.text.strip():
+                raise ValueError("empty response body")
+            response = r
+            break
+        except Exception as e:
+            last_error = e
+            ibja_log(f"REQUEST_FAIL url={url} error={type(e).__name__}: {e}")
+    if response is None:
+        raise RuntimeError(f"All IBJA page requests failed: {type(last_error).__name__}: {last_error}")
+
+    t = re.sub(r"(?is)<(script|style).*?</\1>", " ", response.text)
+    t = re.sub(r"(?i)</t[dh]>", " ", t)
+    t = re.sub(r"(?i)</tr>|<br\s*/?>|</h\d>|</div>|</li>", "\n", t)
     t = re.sub(r"<[^>]+>", " ", t).replace("&nbsp;", " ")
-    rows = []
+    t = re.sub(r"&amp;", "&", t).replace("&#39;", "'").replace("&quot;", '"')
+    rows, matched_lines = [], []
     for ln in t.splitlines():
         ln = re.sub(r"[ \t]+", " ", ln).strip()
+        if not ln:
+            continue
         m = re.match(r"^(\d{2}/\d{2}/\d{4}) (\d{4,6}) (\d{4,6}) (\d{4,6}) (\d{4,6}) (\d{4,6})", ln)
-        if m: rows.append((dt.datetime.strptime(m.group(1), "%d/%m/%Y").date(), int(m.group(2)), int(m.group(4))))
+        if m:
+            matched_lines.append(ln[:300])
+            rows.append((dt.datetime.strptime(m.group(1), "%d/%m/%Y").date(), int(m.group(2)), int(m.group(4))))
+    preview = re.sub(r"[\r\n]+", " | ", t)[:6000]
+    ibja_log(f"TEXT_PREVIEW={preview}")
+    ibja_log(f"REGEX_MATCH_COUNT={len(rows)} matched_rows={matched_lines[:20]}")
     blocks = [[]]
     for row in rows:
-        if blocks[-1] and row[0] > blocks[-1][-1][0]: blocks.append([])
+        if blocks[-1] and row[0] > blocks[-1][-1][0]:
+            blocks.append([])
         blocks[-1].append(row)
-    if len(blocks) < 2 or not blocks[0]: raise ValueError("IBJA AM/PM tables not found (page layout changed?)")
+    if len(blocks) < 2 or not blocks[0]:
+        ibja_log(f"PARSE_FAIL table_blocks={len(blocks)} rows_per_block={[len(b) for b in blocks]}")
+        raise ValueError("IBJA AM/PM tables not found; inspect docs/ibja_scrape.log and docs/ibja_last_response.html")
     out = []
     for sess, blk in (("AM", blocks[0]), ("PM", blocks[1])):
         for d, p999, p916 in blk:
-            if not (0.90 < p916 / p999 < 0.93): continue          # sanity: 916 purity = 91.6% of 999
+            if p999 <= 0 or p916 <= 0 or not (0.90 < p916 / p999 < 0.93):
+                ibja_log(f"ROW_REJECT session={sess} date={d} p999={p999} p916={p916} reason=purity_ratio")
+                continue
             out.append(dict(date=str(d), session=sess, p999=p999, p916=p916))
-    if not out: raise ValueError("no valid IBJA rows")
+    if not out:
+        ibja_log(f"PARSE_FAIL no valid records; table_blocks={len(blocks)} rows_per_block={[len(b) for b in blocks]}")
+        raise ValueError("no valid IBJA rows; inspect docs/ibja_scrape.log and docs/ibja_last_response.html")
+    ibja_log(f"PARSE_SUCCESS rows={len(out)} AM={sum(x['session']=='AM' for x in out)} PM={sum(x['session']=='PM' for x in out)} latest={max(x['date'] for x in out)}")
     return out
 
 def ibja_update():
-    new = pd.DataFrame(ibja_scrape()); new["date"] = pd.to_datetime(new["date"])
-    old = pd.read_csv(IBJA_FILE, parse_dates=["date"]) if IBJA_FILE.exists() else pd.DataFrame(columns=["date", "session", "p999", "p916"])
-    hist = pd.concat([old, new]).drop_duplicates(["date", "session"], keep="last").sort_values(["date", "session"]).reset_index(drop=True)
-    hist.to_csv(IBJA_FILE, index=False)
-    return hist
+    try:
+        new = pd.DataFrame(ibja_scrape()); new["date"] = pd.to_datetime(new["date"])
+        old = pd.read_csv(IBJA_FILE, parse_dates=["date"]) if IBJA_FILE.exists() else pd.DataFrame(columns=["date", "session", "p999", "p916"])
+        hist = pd.concat([old, new]).drop_duplicates(["date", "session"], keep="last").sort_values(["date", "session"]).reset_index(drop=True)
+        hist.to_csv(IBJA_FILE, index=False)
+        ibja_log(f"HISTORY_UPDATED added={len(new)} total_rows={len(hist)} path={IBJA_FILE.relative_to(ROOT)}")
+        return hist
+    except Exception as e:
+        ibja_log(f"UPDATE_FAIL {type(e).__name__}: {e}")
+        raise
 
 def ibja_calib(df, hist):
     """Premium of the official IBJA 999 rate over import-parity price (world gold x rupee x (1+duty)), averaged over recent prints."""
@@ -646,4 +756,10 @@ if __name__ == "__main__":
     out["confidence"] = confidence_from(out.get("backtest"))
     out["updated_utc"] = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M"); out["log"] = log
     (DOCS / "data.json").write_text(json.dumps(out, default=lambda o: None if o is None else str(o), indent=2), encoding="utf-8")
+    run_id = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    try:
+        write_audit_logs(df, out, run_id)
+        log.append("OK   audit logging: market_history.csv, signal_history.csv, run_history.jsonl")
+    except Exception as e:
+        log.append(f"FAIL audit logging: {type(e).__name__}: {e}")
     print("\n".join(log)); print("Verdict:", out["verdict"])
