@@ -1,27 +1,59 @@
 name: Update gold data
 on:
   schedule:
-    - cron: "30 2 * * 1-6"    # 08:00 IST: previous IBJA PM rate and US close
-    - cron: "0 8 * * 1-6"     # 13:30 IST: Asia session done, IBJA morning rate out
-    - cron: "15 12 * * 1-5"   # 17:45 IST: IBJA evening rate out
+    - cron: "30 2 * * 1-6"    # 08:00 IST
+    - cron: "0 8 * * 1-6"      # 13:30 IST
+    - cron: "15 12 * * 1-5"    # 17:45 IST
   workflow_dispatch: {}
 permissions:
   contents: write
+concurrency:
+  group: gold-dashboard-data-refresh
+  cancel-in-progress: false
 jobs:
   update:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -r requirements.txt
-      - run: python fetch_data.py
+          cache: "pip"
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+      - name: Generate dashboard data
+        run: python fetch_data.py
+      - name: Validate generated JSON
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path("docs/data.json")
+          if not p.exists():
+              raise SystemExit("docs/data.json was not generated")
+          data = json.loads(p.read_text(encoding="utf-8"))
+          for key in ("verdict", "signals", "groups", "updated_utc"):
+              if key not in data:
+                  raise SystemExit(f"Generated data is missing required field: {key}")
+          if not isinstance(data["signals"], list) or not isinstance(data["groups"], list):
+              raise SystemExit("signals/groups must be arrays")
+          print(f"Validated dashboard JSON: {len(data['signals'])} signals, verdict={data['verdict']}")
+          PY
       - name: Commit refreshed data
         run: |
           git config user.name "gold-bot"
           git config user.email "gold-bot@users.noreply.github.com"
-          git add docs/data.json docs/etf_state.csv docs/ibja_history.csv
-          git diff --staged --quiet || git commit -m "Daily refresh"
-          git pull --rebase
-          git push
+          git pull --rebase origin main
+          git add docs/data.json
+          if [ -f docs/etf_state.csv ]; then git add docs/etf_state.csv; fi
+          if [ -f docs/ibja_history.csv ]; then git add docs/ibja_history.csv; fi
+          if [ -f docs/ibja_scrape.log ]; then git add docs/ibja_scrape.log; fi
+          if [ -f docs/ibja_last_response.html ]; then git add docs/ibja_last_response.html; fi
+          if git diff --cached --quiet; then
+            echo "No data changes to commit."
+            exit 0
+          fi
+          git commit -m "Daily refresh"
+          git push origin HEAD:main
