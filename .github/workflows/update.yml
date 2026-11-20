@@ -1,8 +1,9 @@
 name: Update gold data
 on:
   schedule:
-    - cron: "30 2 * * 1-6"
-    - cron: "0 8 * * 1-6"
+    - cron: "30 2 * * 1-6"    # 08:00 IST: previous IBJA PM rate and US close
+    - cron: "0 8 * * 1-6"     # 13:30 IST: Asia session done, IBJA morning rate out
+    - cron: "15 12 * * 1-5"   # 17:45 IST: IBJA evening rate out
   workflow_dispatch: {}
 permissions:
   contents: write
@@ -20,6 +21,7 @@ jobs:
         run: |
           git config user.name "gold-bot"
           git config user.email "gold-bot@users.noreply.github.com"
-          git add docs/data.json docs/etf_state.csv
+          git add docs/data.json docs/etf_state.csv docs/ibja_history.csv
           git diff --staged --quiet || git commit -m "Daily refresh"
+          git pull --rebase
           git push
