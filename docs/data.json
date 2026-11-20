@@ -1,7 +1,7 @@
 {
   "short": "UNCONFIRMED",
   "msg": "The available indicators do not yet confirm stabilisation.",
-  "trend": "Gold is down 12.9% over the last 2 weeks; it is still making new lows.",
+  "trend": "Gold is down 12.7% over the last 2 weeks; it is still making new lows.",
   "verdict": "WAIT: outlook has not improved yet",
   "overall": 0.4,
   "improving": 3,
@@ -46,8 +46,8 @@
       "key": "gold",
       "name": "Gold price",
       "group": "Price & positioning",
-      "latest": 3548.199951171875,
-      "change": -0.12925469675192125,
+      "latest": 3556.39990234375,
+      "change": -0.12724238936563215,
       "score": 0,
       "why": "Stops making lower lows and holds a recovery",
       "fmt": "usd",
@@ -93,7 +93,7 @@
         3864.2,
         3741.8999,
         3685.5,
-        3548.2
+        3556.3999
       ],
       "excluded": false
     },
@@ -101,8 +101,8 @@
       "key": "dxy",
       "name": "US dollar",
       "group": "Dollar & rates",
-      "latest": 103.7969970703125,
-      "change": 0.014633372178858073,
+      "latest": 103.76399993896484,
+      "change": 0.014310819584886447,
       "score": 0,
       "why": "Sustained weakening",
       "fmt": "num2",
@@ -148,7 +148,7 @@
         103.49,
         103.86,
         103.9,
-        103.797
+        103.764
       ],
       "excluded": false
     },
@@ -431,8 +431,8 @@
       "key": "fx",
       "name": "USD/INR",
       "group": "India-specific",
-      "latest": 92.98500061035156,
-      "change": -0.011153411085160658,
+      "latest": 92.99250030517578,
+      "change": -0.011073655774130331,
       "score": 1,
       "why": "No sudden rupee weakness",
       "fmt": "num2",
@@ -478,7 +478,7 @@
         93.9631,
         93.4746,
         93.4653,
-        92.985
+        92.9925
       ],
       "excluded": false
     },
@@ -575,8 +575,8 @@
       "key": "asia_cum",
       "name": "Asia-session gold (early read)",
       "group": "Asia (early read)",
-      "latest": 0.0127285642163939,
-      "change": -0.03904044902791037,
+      "latest": 0.016304092039656104,
+      "change": -0.03546492120464817,
       "score": 0,
       "why": "Gold bid during Tokyo/Shanghai/HK hours",
       "fmt": "pct1",
@@ -622,7 +622,7 @@
         0.0501,
         0.0306,
         0.0298,
-        0.0127
+        0.0163
       ],
       "excluded": false
     },
@@ -630,8 +630,8 @@
       "key": "sh_prem",
       "name": "Shanghai premium (added)",
       "group": "Asia (early read)",
-      "latest": 192.36417333994177,
-      "change": 173.24087906802652,
+      "latest": 184.4448344298421,
+      "change": 165.32154015792685,
       "score": 1,
       "why": "Premium rising / back above zero = Chinese physical demand returning",
       "fmt": "usd1",
@@ -677,7 +677,7 @@
         21.2873,
         41.296,
         55.4007,
-        192.3642
+        184.4448
       ],
       "excluded": false
     },
@@ -685,8 +685,8 @@
       "key": "cnh",
       "name": "Yuan (USD/CNY, added)",
       "group": "Asia (early read)",
-      "latest": 6.6682000160217285,
-      "change": -0.00032983428293531514,
+      "latest": 6.667699813842773,
+      "change": -0.0004048226147079781,
       "score": 0.5,
       "why": "Yuan stable or strengthening supports Chinese gold buying",
       "fmt": "num4",
@@ -732,21 +732,21 @@
         6.6642,
         6.6659,
         6.6676,
-        6.6682
+        6.6677
       ],
       "excluded": false
     }
   ],
-  "parity": 125645.45605598926,
+  "parity": 125945.9822078774,
   "rates": {
-    "gold_usd": 3548.199951171875,
-    "usdinr": 92.98500061035156,
+    "gold_usd": 3556.39990234375,
+    "usdinr": 92.99250030517578,
     "source": "gold futures",
-    "base24": 10607.46779704426,
-    "p24_ex": 12198.587966600899,
-    "p22_ex": 11173.906577406424,
-    "p22_gst": 11509.123774728618,
-    "p22_all": 11509.123774728618,
+    "base24": 10632.839359044105,
+    "p24_ex": 12227.765262900719,
+    "p22_ex": 11200.63298081706,
+    "p22_gst": 11536.651970241572,
+    "p22_all": 11536.651970241572,
     "duty": 0.15,
     "gst": 0.03,
     "making": 0.0,
@@ -817,13 +817,13 @@
     }
   ],
   "context": {
-    "gold": 3548.199951171875,
-    "from_high": -0.3328444614312983,
+    "gold": 3556.39990234375,
+    "from_high": -0.33130265349612187,
     "range_pos": 0.0,
-    "vs50": -0.1370097454276349,
-    "vs200": -0.20172686458222,
-    "inr": 11173.906577406424,
-    "inr_chg10": -0.14284146685130783,
+    "vs50": -0.13504986096980454,
+    "vs200": -0.19988942193526504,
+    "inr": 11200.63298081706,
+    "inr_chg10": -0.14079126492907923,
     "inr_pos": 0.0
   },
   "drivers": [
@@ -844,8 +844,8 @@
     {
       "name": "Oil (WTI, US$)",
       "unit": "$",
-      "latest": 82.5,
-      "change": -0.09170980582548738,
+      "latest": 82.91000366210938,
+      "change": -0.08719583848161361,
       "absolute": false
     },
     {
@@ -1157,9 +1157,9 @@
   "base_rates": {
     "since": "2000-08-30",
     "now": {
-      "from_high": -0.3331640972622041,
-      "vs200": -0.2021077933829828,
-      "rsi": 25.76469765620631
+      "from_high": -0.33056932269061845,
+      "vs200": -0.19901549015351683,
+      "rsi": 26.17856559269653
     },
     "rows": [
       {
@@ -1342,7 +1342,7 @@
   "backtest": {
     "days": 190,
     "horizon": 10,
-    "base_avg": -0.012586190312843946,
+    "base_avg": -0.01257559922133716,
     "base_hit": 0.3368421052631579,
     "rows": [
       {
@@ -1351,11 +1351,11 @@
         "candidate": false,
         "n_green": 60,
         "n_red": 73,
-        "green_avg": -0.0032757199633479377,
+        "green_avg": -0.003242181506909786,
         "red_avg": -0.00781915588660304,
         "green_hit": 0.43333333333333335,
         "red_hit": 0.3698630136986301,
-        "edge": 0.004543435923255103,
+        "edge": 0.004576974379693254,
         "verdict": "no clear edge"
       },
       {
@@ -1391,10 +1391,10 @@
         "n_green": 117,
         "n_red": 68,
         "green_avg": -0.015020987527045934,
-        "red_avg": -0.00896664870560795,
+        "red_avg": -0.008937055949927228,
         "green_hit": 0.3162393162393162,
         "red_hit": 0.36764705882352944,
-        "edge": -0.006054338821437985,
+        "edge": -0.006083931577118706,
         "verdict": "no clear edge"
       },
       {
@@ -1403,11 +1403,11 @@
         "candidate": false,
         "n_green": 65,
         "n_red": 7,
-        "green_avg": -0.01475452663929668,
+        "green_avg": -0.014723568064123001,
         "red_avg": -0.03290186308534034,
         "green_hit": 0.27692307692307694,
         "red_hit": 0.0,
-        "edge": 0.01814733644604366,
+        "edge": 0.01817829502121734,
         "verdict": "too few observations"
       },
       {
@@ -1442,11 +1442,11 @@
         "candidate": false,
         "n_green": 111,
         "n_red": 32,
-        "green_avg": -0.011745747188924948,
+        "green_avg": -0.011727618293552972,
         "red_avg": -0.002842994954907349,
         "green_hit": 0.36036036036036034,
         "red_hit": 0.40625,
-        "edge": -0.008902752234017599,
+        "edge": -0.008884623338645623,
         "verdict": "no clear edge"
       },
       {
@@ -1508,10 +1508,10 @@
         "n_green": 93,
         "n_red": 93,
         "green_avg": -0.009246691936467289,
-        "red_avg": -0.016175777787063726,
+        "red_avg": -0.016154140073232657,
         "green_hit": 0.3655913978494624,
         "red_hit": 0.3118279569892473,
-        "edge": 0.006929085850596437,
+        "edge": 0.006907448136765368,
         "verdict": "no clear edge"
       },
       {
@@ -1533,11 +1533,11 @@
         "candidate": true,
         "n_green": 67,
         "n_red": 86,
-        "green_avg": -0.006041528213054614,
+        "green_avg": -0.006011493774453284,
         "red_avg": -0.020234953702281136,
         "green_hit": 0.373134328358209,
         "red_hit": 0.313953488372093,
-        "edge": 0.014193425489226523,
+        "edge": 0.014223459927827852,
         "verdict": "no clear edge"
       },
       {
@@ -1559,11 +1559,11 @@
         "candidate": true,
         "n_green": 24,
         "n_red": 67,
-        "green_avg": -0.008081699504731721,
+        "green_avg": -0.007997853363636342,
         "red_avg": -0.01884473221504082,
         "green_hit": 0.375,
         "red_hit": 0.2537313432835821,
-        "edge": 0.0107630327103091,
+        "edge": 0.010846878851404479,
         "verdict": "no clear edge"
       },
       {
@@ -1573,10 +1573,10 @@
         "n_green": 37,
         "n_red": 42,
         "green_avg": -0.03423459922885639,
-        "red_avg": -0.021120210924388712,
+        "red_avg": -0.021072298843762778,
         "green_hit": 0.24324324324324326,
         "red_hit": 0.30952380952380953,
-        "edge": -0.013114388304467678,
+        "edge": -0.013162300385093612,
         "verdict": "no clear edge"
       },
       {
@@ -1585,11 +1585,11 @@
         "candidate": true,
         "n_green": 59,
         "n_red": 86,
-        "green_avg": -0.020731792801938344,
+        "green_avg": -0.02069768589708599,
         "red_avg": -0.011722469296811458,
         "green_hit": 0.2711864406779661,
         "red_hit": 0.38372093023255816,
-        "edge": -0.009009323505126886,
+        "edge": -0.008975216600274531,
         "verdict": "no clear edge"
       },
       {
@@ -1599,10 +1599,10 @@
         "n_green": 37,
         "n_red": 45,
         "green_avg": -0.006573620547974376,
-        "red_avg": -0.02114366834318819,
+        "red_avg": -0.021098950401270654,
         "green_hit": 0.32432432432432434,
         "red_hit": 0.37777777777777777,
-        "edge": 0.014570047795213814,
+        "edge": 0.014525329853296277,
         "verdict": "no clear edge"
       },
       {
@@ -1612,10 +1612,10 @@
         "n_green": 43,
         "n_red": 22,
         "green_avg": -0.004787044717496712,
-        "red_avg": -0.006719008174109753,
+        "red_avg": -0.006627539656551157,
         "green_hit": 0.32558139534883723,
         "red_hit": 0.5454545454545454,
-        "edge": 0.0019319634566130409,
+        "edge": 0.0018404949390544451,
         "verdict": "no clear edge"
       }
     ],
@@ -1655,7 +1655,7 @@
     "helps": 0,
     "tested": 8
   },
-  "updated_utc": "2026-11-20 06:08",
+  "updated_utc": "2026-11-20 06:35",
   "log": [
     "OK   gold GC=F",
     "FAIL spot gold XAUUSD=X: ValueError: empty series",
