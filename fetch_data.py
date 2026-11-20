@@ -11,7 +11,7 @@ S, M, L = 5, 10, 20  # short / medium / long windows (trading days)
 DEFAULT = {"wedding_date": "2027-11-19", "import_duty": 0.15, "gst": 0.03, "policy_override": "",
            "buy_score": 0.70, "watch_score": 0.50, "groups_needed": 3,
            "exclude_from_score": ["gvz", "in_etf"],
-           "target_grams": 24, "grams_bought": 0, "finish_days_before": 30, "making_charge_pct": 0.0,
+           "target_grams": 24, "grams_bought": 0, "finish_days_before": 30, "making_charge_pct": 0.0, "local_premium_pct": 0.0,
            "events": [{"date": "2026-12-09", "name": "US Fed rate decision (FOMC)"},
                       {"date": "2027-01-27", "name": "US Fed rate decision (tentative date)"},
                       {"date": "2027-02-01", "name": "India Union Budget (expected; import duty changes often announced here)"}]}
@@ -182,6 +182,56 @@ def asia_gold_news():
         if "asia gold" in t.lower(): out.append(f"{t} ({d[:16]})")
     return out[:3]
 
+
+# ---------------- IBJA official benchmark (ibjarates.com) ----------------
+IBJA_FILE = DOCS / "ibja_history.csv"
+def ibja_scrape():
+    """Parse the public IBJA page: AM and PM tables of recent dates (rates per 10 g, before GST)."""
+    r = requests.get("https://ibjarates.com/index.aspx", headers=UA, timeout=45); r.raise_for_status()
+    t = re.sub(r"(?is)<(script|style).*?</\1>", " ", r.text)
+    t = re.sub(r"(?i)</t[dh]>", " ", t); t = re.sub(r"(?i)</tr>|<br\s*/?>|</h\d>|</div>|</li>", "\n", t)
+    t = re.sub(r"<[^>]+>", " ", t).replace("&nbsp;", " ")
+    rows = []
+    for ln in t.splitlines():
+        ln = re.sub(r"[ \t]+", " ", ln).strip()
+        m = re.match(r"^(\d{2}/\d{2}/\d{4}) (\d{4,6}) (\d{4,6}) (\d{4,6}) (\d{4,6}) (\d{4,6})", ln)
+        if m: rows.append((dt.datetime.strptime(m.group(1), "%d/%m/%Y").date(), int(m.group(2)), int(m.group(4))))
+    blocks = [[]]
+    for row in rows:
+        if blocks[-1] and row[0] > blocks[-1][-1][0]: blocks.append([])
+        blocks[-1].append(row)
+    if len(blocks) < 2 or not blocks[0]: raise ValueError("IBJA AM/PM tables not found (page layout changed?)")
+    out = []
+    for sess, blk in (("AM", blocks[0]), ("PM", blocks[1])):
+        for d, p999, p916 in blk:
+            if not (0.90 < p916 / p999 < 0.93): continue          # sanity: 916 purity = 91.6% of 999
+            out.append(dict(date=str(d), session=sess, p999=p999, p916=p916))
+    if not out: raise ValueError("no valid IBJA rows")
+    return out
+
+def ibja_update():
+    new = pd.DataFrame(ibja_scrape()); new["date"] = pd.to_datetime(new["date"])
+    old = pd.read_csv(IBJA_FILE, parse_dates=["date"]) if IBJA_FILE.exists() else pd.DataFrame(columns=["date", "session", "p999", "p916"])
+    hist = pd.concat([old, new]).drop_duplicates(["date", "session"], keep="last").sort_values(["date", "session"]).reset_index(drop=True)
+    hist.to_csv(IBJA_FILE, index=False)
+    return hist
+
+def ibja_calib(df, hist):
+    """Premium of the official IBJA 999 rate over import-parity price (world gold x rupee x (1+duty)), averaged over recent prints."""
+    if hist is None or len(hist) == 0: return None
+    col = "spot" if ("spot" in df and df["spot"].notna().sum() > 30) else "gold"
+    obs = []
+    for _, r in hist.iterrows():
+        d = pd.Timestamp(r["date"]).normalize()
+        if d not in df.index: continue
+        g, fx = df.at[d, col], df.at[d, "fx"]
+        if pd.isna(g) or pd.isna(fx): continue
+        obs.append(float(r["p999"]) / 10 / (g * fx / 31.1035 * (1 + cfg["import_duty"])) - 1)
+    if not obs: return None
+    lr = hist.iloc[-1]
+    return dict(premium=float(np.mean(obs[-4:])), n=len(obs), obs=obs,
+                latest=dict(date=str(pd.Timestamp(lr["date"]).date()), session=str(lr["session"]), p916_g=float(lr["p916"]) / 10, p999_g=float(lr["p999"]) / 10))
+
 # ---------------- state: daily snapshots for ETF proxies ----------------
 STATE = DOCS / "etf_state.csv"
 def load_state():
@@ -192,6 +242,7 @@ def load_state():
 def build():
     series = {}
     series["gold"] = safe("gold GC=F", lambda: yf_close("GC=F"))
+    series["spot"] = safe("spot gold XAUUSD=X", lambda: yf_close("XAUUSD=X"))
     series["dxy"] = safe("dollar index DX-Y.NYB", lambda: yf_close("DX-Y.NYB"))
     series["gvz"] = safe("gold vol ^GVZ", lambda: yf_close("^GVZ"))
     series["fx"] = safe("USD/INR INR=X", lambda: yf_close("INR=X")) 
@@ -252,9 +303,11 @@ def lead_lag(df):
     return out or None
 
 # ---------------- scoring ----------------
-def compute(df, news=None, cfg=cfg, light=False):
+def compute(df, news=None, cfg=cfg, light=False, ibja=None):
+    prem_applied = ibja["premium"] if ibja else float(cfg.get("local_premium_pct", 0))
     def col(c): return df[c]
     def v(c, k=0):
+        if c not in df: return None
         s = df[c]
         if len(s) <= k: return None
         x = s.iloc[-1 - k]
@@ -319,6 +372,13 @@ def compute(df, news=None, cfg=cfg, light=False):
     if z0 is not None and zch is not None and len(df) >= L:
         a = float(df["gvz"].iloc[-L:].mean()); sc = 1 if (z0 < a and zch <= 0) else 0 if zch >= 0.10 else 0.5
     add("gvz", "Gold volatility (added)", "Price & positioning", z0, zch, sc, "Calming: below 1-month average, not rising", "num1", "pct")
+    # IBJA premium (India price versus world price)
+    if ibja and ibja["n"] >= 10:
+        cur = float(np.mean(ibja["obs"][-2:])); basep = float(np.mean(ibja["obs"][-10:])); dif = cur - basep
+        scp = 1 if dif <= -0.005 else 0 if dif >= 0.005 else 0.5
+        add("ibja_prem", "India price vs world price (IBJA)", "India-specific", cur, dif, scp, "India's official price not stretched versus the world price", "pct1", "pct", "Official IBJA benchmark versus world gold x rupee x import duty")
+    else:
+        add("ibja_prem", "India price vs world price (IBJA)", "India-specific", None, None, None, "India's official price not stretched versus the world price", "pct1", "pct", "Building history from the official IBJA rate: scores after about 5 working days")
     # 10 policy
     titles, ps = news if news else ([], None)
     if cfg.get("policy_override"):
@@ -406,7 +466,8 @@ def compute(df, news=None, cfg=cfg, light=False):
                    vs50=now / float(gs.iloc[-50:].mean()) - 1)
         if len(gs) >= 200: ctx["vs200"] = now / float(gs.iloc[-200:].mean()) - 1
         if "fx" in df:
-            inr = (df["gold"] * df["fx"] / 31.1035 * 10).dropna()
+            pb = "spot" if ("spot" in df and df["spot"].notna().sum() > 60) else "gold"
+            inr = (df[pb] * df["fx"] / 31.1035 * (1 + cfg["import_duty"]) * 0.916 * (1 + prem_applied)).dropna()
             if len(inr) >= 60:
                 z = inr.iloc[-60:]
                 ctx.update(inr=float(inr.iloc[-1]), inr_chg10=float(inr.iloc[-1] / inr.iloc[-1 - M] - 1),
@@ -418,14 +479,23 @@ def compute(df, news=None, cfg=cfg, light=False):
            "WATCH": "Signs of a bottom are appearing, but not confirmed yet. Keep waiting a little longer.",
            "WAIT": "The fall is not showing signs of ending yet. Keep waiting."}[short]
     if verdict.startswith("REBOUND"): msg = "Price bounced, but other indicators do not confirm it. Do not chase it."
-    parity = None
-    if g0 and f0: parity = g0 * f0 / 31.1035 * 10 * (1 + cfg["import_duty"]) * (1 + cfg["gst"])
+    parity = None; rates = None
+    g_sp = v("spot") or g0
+    if g_sp and f0:
+        base24 = g_sp * f0 / 31.1035                       # Rs per gram of pure gold before duty
+        p24_ex = base24 * (1 + cfg["import_duty"])         # with import duty, before GST (how IBJA-style rates are quoted)
+        p22_ex = p24_ex * 0.916 * (1 + prem_applied)
+        rates = dict(gold_usd=g_sp, usdinr=f0, source="spot gold" if v("spot") else "gold futures", base24=base24, p24_ex=p24_ex,
+                     p22_ex=p22_ex, p22_gst=p22_ex * (1 + cfg["gst"]), p22_all=p22_ex * (1 + cfg["gst"]) * (1 + float(cfg["making_charge_pct"])),
+                     duty=cfg["import_duty"], gst=cfg["gst"], making=float(cfg["making_charge_pct"]), local_premium=prem_applied,
+                     calibrated=bool(ibja), ibja=(ibja["latest"] if ibja else None))
+        parity = p24_ex * (1 + cfg["gst"]) * 10
     days = None
     if cfg.get("wedding_date"):
         try: days = (dt.date.fromisoformat(cfg["wedding_date"]) - dt.date.today()).days
         except ValueError: pass
     return dict(short=short, msg=msg, trend=trend, verdict=verdict, overall=overall, improving=improving, scored=len(scored), total=len([s for s in sig if s['key'] not in ex]),
-                confirmed=confirmed, needed=cfg["groups_needed"], groups=groups, signals=sig, parity=parity,
+                confirmed=confirmed, needed=cfg["groups_needed"], groups=groups, signals=sig, parity=parity, rates=rates, n_all=len(sig), n_excluded=sum(1 for x in sig if x['key'] in ex), n_nodata=sum(1 for x in sig if x['key'] not in ex and x['score'] is None),
                 days_to_wedding=days, as_of=str(df.index[-1].date()), lead_lag=(None if light else lead_lag(df)), cands=cands, context=ctx, drivers=drivers)
 
 # ---------------- backtest: did each signal actually help? ----------------
@@ -511,7 +581,7 @@ def make_plan(out, cfg):
     upcoming.sort(key=lambda e: e["days"])
     hold = next((e for e in upcoming if e["days"] <= 3), None) if months_left > 1 else None
     if hold: suggest = 0.0
-    price10 = out.get("parity"); per_g = price10 / 10 * (1 + float(cfg["making_charge_pct"])) if price10 else None
+    per_g = (out.get("rates") or {}).get("p22_all")
     gv = next((s["latest"] for s in out["signals"] if s["key"] == "gvz" and s["latest"]), None)
     sig_m = gv / 100 / math.sqrt(12) if gv else None
     return dict(target=target, bought=bought, remaining=remaining, finish=str(finish), wedding=str(wd), days_left=days_left,
@@ -521,16 +591,37 @@ def make_plan(out, cfg):
                 swing_1m=None if (sig_m is None or per_g is None) else remaining * per_g * sig_m,
                 swing_3m=None if (sig_m is None or per_g is None) else remaining * per_g * sig_m * math.sqrt(3))
 
+def odds_from(br):
+    now = br["now"]; pick = "All days (baseline)"
+    if now["from_high"] <= -0.20 and now["vs200"] <= -0.10: pick = "20%+ below high AND 10%+ below 200-day"
+    elif now["from_high"] <= -0.20: pick = "20%+ below its 1-year high"
+    elif now["vs200"] <= -0.10: pick = "10%+ below its 200-day average"
+    elif now["rsi"] <= 30: pick = "Oversold (RSI below 30)"
+    r = next(x for x in br["rows"] if x["name"] == pick)
+    return dict(label=pick, p3=r["3 months"]["pos"], p12=r["12 months"]["pos"], med3=r["3 months"]["median"], med12=r["12 months"]["median"],
+                days=r["days"], episodes=r["episodes"])
+
+def confidence_from(bt):
+    if not bt: return dict(level="LOW", helps=0, tested=0)
+    scored = [r for r in bt["rows"] if not r["candidate"] and r["verdict"] != "too few observations"]
+    helps = sum(1 for r in scored if r["verdict"] == "helps")
+    level = "LOW" if helps == 0 else "MEDIUM" if helps <= 2 else "HIGHER"
+    return dict(level=level, helps=helps, tested=len(scored))
+
 if __name__ == "__main__":
     df = build()
     news = safe("policy news (Google News RSS)", policy_news)
-    out = compute(df, news)
+    ibja_hist = safe("IBJA official rates (ibjarates.com)", ibja_update)
+    ibja = ibja_calib(df, ibja_hist) if ibja_hist is not None else None
+    out = compute(df, news, cfg, False, ibja)
     out["asia_gold_news"] = safe("Reuters Asia Gold headlines", asia_gold_news) or []
-    out["health"] = [f"{c}: last value {df[c].last_valid_index().date() if df[c].last_valid_index() is not None else 'NONE'}, {int(df[c].iloc[-10:].notna().sum())}/10 recent rows filled" for c in df.columns if c in ("gold","dxy","ry","y2","nom10","be10","vix","spx","oil","gdx","si","cftc","oi","gl_etf","fx","gvz","cnh","sge","sh_prem","asia_ret")]
+    out["health"] = [f"{c}: last value {df[c].last_valid_index().date() if df[c].last_valid_index() is not None else 'NONE'}, {int(df[c].iloc[-10:].notna().sum())}/10 recent rows filled" for c in df.columns if c in ("gold","spot","dxy","ry","y2","nom10","be10","vix","spx","oil","gdx","si","cftc","oi","gl_etf","fx","gvz","cnh","sge","sh_prem","asia_ret")]
     long_g = safe("gold long history (25y) GC=F", lambda: yf_close("GC=F", period="max"))
     out["base_rates"] = safe("25-year base rates", lambda: base_rates(long_g)) if long_g is not None else None
     out["plan"] = safe("staged-buy plan", lambda: make_plan(out, cfg))
     out["backtest"] = safe("backtest of signals", lambda: backtest(df))
+    out["odds"] = safe("odds from history", lambda: odds_from(out["base_rates"])) if out.get("base_rates") else None
+    out["confidence"] = confidence_from(out.get("backtest"))
     out["updated_utc"] = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M"); out["log"] = log
     (DOCS / "data.json").write_text(json.dumps(out, default=lambda o: None if o is None else str(o)))
     print("\n".join(log)); print("Verdict:", out["verdict"])
