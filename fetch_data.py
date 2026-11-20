@@ -1,5 +1,6 @@
-"""Daily gold-signal updater. Pulls free public data, scores 10 signals, writes docs/data.json.
-Every source is wrapped in try/except: a broken source shows 'no data' instead of crashing the run."""
+"""Gold-market monitoring dashboard data updater. Pulls public data, scores signals,
+reports data quality separately from signal strength, and writes docs/data.json.
+Every source is wrapped in try/except so partial-source failures are visible."""
 import io, json, re, sys, datetime as dt
 from pathlib import Path
 import numpy as np, pandas as pd, requests
@@ -8,13 +9,10 @@ ROOT = Path(__file__).parent
 DOCS = ROOT / "docs"; DOCS.mkdir(exist_ok=True)
 UA = {"User-Agent": "Mozilla/5.0 (gold-dashboard)"}
 S, M, L = 5, 10, 20  # short / medium / long windows (trading days)
-DEFAULT = {"wedding_date": "2027-11-19", "import_duty": 0.15, "gst": 0.03, "policy_override": "",
+DEFAULT = {"import_duty": 0.15, "gst": 0.03, "policy_override": "",
            "buy_score": 0.70, "watch_score": 0.50, "groups_needed": 3,
            "exclude_from_score": ["gvz", "in_etf"],
-           "target_grams": 24, "grams_bought": 0, "finish_days_before": 30, "making_charge_pct": 0.0, "local_premium_pct": 0.0,
-           "events": [{"date": "2026-12-09", "name": "US Fed rate decision (FOMC)"},
-                      {"date": "2027-01-27", "name": "US Fed rate decision (tentative date)"},
-                      {"date": "2027-02-01", "name": "India Union Budget (expected; import duty changes often announced here)"}]}
+           "making_charge_pct": 0.0, "local_premium_pct": 0.0}
 cfg = dict(DEFAULT)
 if (ROOT / "config.json").exists():
     for _k, _v in json.loads((ROOT / "config.json").read_text()).items():
@@ -302,6 +300,49 @@ def lead_lag(df):
                         nxt=round(float(b["x"].corr(b["nxt"])), 2) if len(b) >= 25 else None))
     return out or None
 
+# ---------------- data-quality diagnostics ----------------
+def data_quality_report(df, run_log=None):
+    """Describe availability and freshness without treating filled values as fresh observations."""
+    critical = {"gold", "spot", "fx"}
+    report = []
+    today = pd.Timestamp.today().normalize()
+    for col in df.columns:
+        raw = df[col].dropna() if col in df else pd.Series(dtype=float)
+        if raw.empty:
+            report.append(dict(name=col, status="MISSING", last_date=None, age_days=None,
+                              recent_filled=0, recent_total=10, coverage=0.0))
+            continue
+        last = pd.Timestamp(raw.index[-1]).normalize()
+        age = max(0, int((today - last).days))
+        recent = int(df[col].tail(10).notna().sum())
+        coverage = float(df[col].notna().mean()) if len(df) else 0.0
+        # Weekends/holidays are normal. Staleness thresholds are calendar days.
+        status = "FRESH" if age <= 4 else "DELAYED" if age <= 10 else "STALE"
+        if col in critical and age > 4: status = "STALE"
+        report.append(dict(name=col, status=status, last_date=str(last.date()), age_days=age,
+                          recent_filled=recent, recent_total=min(10, len(df)), coverage=round(coverage, 3)))
+    missing_critical = [x["name"] for x in report if x["name"] in critical and x["status"] == "MISSING"]
+    stale_critical = [x["name"] for x in report if x["name"] in critical and x["status"] == "STALE"]
+    return dict(rows=report, critical_missing=missing_critical, critical_stale=stale_critical,
+               failed_sources=[x for x in (run_log or []) if x.startswith("FAIL")])
+
+def signal_diagnostics(out):
+    """Expose signal counts and opposing evidence; this is transparency, not a prediction."""
+    ex = set(out.get("excluded_keys", []))
+    active = [s for s in out.get("signals", []) if not s.get("excluded") and s.get("score") is not None]
+    bullish = sum(s["score"] == 1 for s in active)
+    bearish = sum(s["score"] == 0 for s in active)
+    neutral = sum(s["score"] == 0.5 for s in active)
+    groups = out.get("groups", [])
+    group_scores = [g["score"] for g in groups if g.get("score") is not None]
+    confirmed = sum(x >= 0.6 for x in group_scores)
+    conflict = bool(bullish >= 2 and bearish >= 2)
+    return dict(available=len(active), missing=sum(s.get("score") is None and not s.get("excluded") for s in out.get("signals", [])),
+               excluded=sum(s.get("excluded") for s in out.get("signals", [])), bullish=bullish,
+               bearish=bearish, neutral=neutral, groups_available=len(group_scores),
+               groups_confirmed=confirmed, conflicting=conflict,
+               note="Signal strength and data reliability are separate. Missing or stale inputs can materially weaken interpretation.")
+
 # ---------------- scoring ----------------
 def compute(df, news=None, cfg=cfg, light=False, ibja=None):
     prem_applied = ibja["premium"] if ibja else float(cfg.get("local_premium_pct", 0))
@@ -472,12 +513,12 @@ def compute(df, news=None, cfg=cfg, light=False, ibja=None):
                 z = inr.iloc[-60:]
                 ctx.update(inr=float(inr.iloc[-1]), inr_chg10=float(inr.iloc[-1] / inr.iloc[-1 - M] - 1),
                            inr_pos=float((inr.iloc[-1] - z.min()) / (z.max() - z.min())) if z.max() > z.min() else None)
-    short = "BUY" if verdict.startswith("BUY") else "WATCH" if verdict.startswith(("IMPROVING", "REBOUND")) else "WAIT"
+    short = "SUPPORTIVE" if verdict.startswith("BUY") else "MIXED" if verdict.startswith(("IMPROVING", "REBOUND")) else "UNCONFIRMED"
     gch = pct("gold", M)
     trend = "" if gch is None else f"Gold is {'down' if gch < 0 else 'up'} {abs(gch) * 100:.1f}% over the last 2 weeks" + (f"; {gold_note}." if gold_note else ".")
-    msg = {"BUY": "The fall looks over and most indicators agree. Consider buying in stages.",
-           "WATCH": "Signs of a bottom are appearing, but not confirmed yet. Keep waiting a little longer.",
-           "WAIT": "The fall is not showing signs of ending yet. Keep waiting."}[short]
+    msg = {"SUPPORTIVE": "Multiple scored indicators currently support stabilisation, but the model is experimental.",
+           "MIXED": "Some indicators support stabilisation; others remain inconclusive or disagree.",
+           "UNCONFIRMED": "The available indicators do not yet confirm stabilisation."}[short]
     if verdict.startswith("REBOUND"): msg = "Price bounced, but other indicators do not confirm it. Do not chase it."
     parity = None; rates = None
     g_sp = v("spot") or g0
@@ -490,13 +531,9 @@ def compute(df, news=None, cfg=cfg, light=False, ibja=None):
                      duty=cfg["import_duty"], gst=cfg["gst"], making=float(cfg["making_charge_pct"]), local_premium=prem_applied,
                      calibrated=bool(ibja), ibja=(ibja["latest"] if ibja else None))
         parity = p24_ex * (1 + cfg["gst"]) * 10
-    days = None
-    if cfg.get("wedding_date"):
-        try: days = (dt.date.fromisoformat(cfg["wedding_date"]) - dt.date.today()).days
-        except ValueError: pass
     return dict(short=short, msg=msg, trend=trend, verdict=verdict, overall=overall, improving=improving, scored=len(scored), total=len([s for s in sig if s['key'] not in ex]),
                 confirmed=confirmed, needed=cfg["groups_needed"], groups=groups, signals=sig, parity=parity, rates=rates, n_all=len(sig), n_excluded=sum(1 for x in sig if x['key'] in ex), n_nodata=sum(1 for x in sig if x['key'] not in ex and x['score'] is None),
-                days_to_wedding=days, as_of=str(df.index[-1].date()), lead_lag=(None if light else lead_lag(df)), cands=cands, context=ctx, drivers=drivers)
+                as_of=str(df.index[-1].date()), lead_lag=(None if light else lead_lag(df)), cands=cands, context=ctx, drivers=drivers, excluded_keys=sorted(ex))
 
 # ---------------- backtest: did each signal actually help? ----------------
 def backtest(df, horizon=10, max_days=200, min_n=20):
@@ -525,7 +562,21 @@ def backtest(df, horizon=10, max_days=200, min_n=20):
     buckets = []
     for b in ("BUY", "WATCH", "WAIT"):
         nb, mb, hb = stats([f for _, f, sh in recs if sh == b]); buckets.append(dict(name=b, n=nb, avg=mb, hit=hb))
-    return dict(days=len(recs), horizon=horizon, base_avg=float(allf.mean()), base_hit=float((allf > 0).mean()), rows=rows, buckets=buckets)
+    # Signal-score correlations reveal checks that may be telling the same story.
+    score_frame = pd.DataFrame([sc for sc, _, _ in recs])
+    redundant_pairs = []
+    if not score_frame.empty:
+        corr = score_frame.corr(min_periods=30)
+        keys = list(corr.columns)
+        for i, a in enumerate(keys):
+            for b in keys[i + 1:]:
+                value = corr.loc[a, b]
+                if pd.notna(value) and abs(float(value)) >= 0.65:
+                    na = int(score_frame[[a, b]].dropna().shape[0])
+                    redundant_pairs.append(dict(a=a, b=b, correlation=round(float(value), 2), n=na))
+        redundant_pairs.sort(key=lambda x: abs(x["correlation"]), reverse=True)
+    return dict(days=len(recs), horizon=horizon, base_avg=float(allf.mean()), base_hit=float((allf > 0).mean()),
+                rows=rows, buckets=buckets, redundant_pairs=redundant_pairs[:12])
 
 # ---------------- 25-year base rates ----------------
 def base_rates(g):
@@ -559,37 +610,7 @@ def base_rates(g):
         rows.append(row)
     return dict(since=str(g.index[0].date()), now=dict(from_high=float(dd.iloc[-1]), vs200=float(gap.iloc[-1]), rsi=float(rsi.iloc[-1])), rows=rows)
 
-# ---------------- staged-buy plan ----------------
-def make_plan(out, cfg):
-    import math
-    today = dt.date.today()
-    try: wd = dt.date.fromisoformat(cfg["wedding_date"])
-    except Exception: return None
-    finish = wd - dt.timedelta(days=int(cfg["finish_days_before"]))
-    days_left = (finish - today).days
-    target, bought = float(cfg["target_grams"]), float(cfg["grams_bought"])
-    remaining = max(0.0, target - bought)
-    months_left = max(1, math.ceil(max(days_left, 0) / 30.4))
-    base = remaining / months_left
-    mult = {"BUY": 1.5, "WATCH": 1.0, "WAIT": 0.5}[out["short"]]
-    suggest = remaining if months_left <= 1 else min(remaining, base * mult)
-    upcoming = []
-    for e in cfg.get("events", []):
-        try: ed = dt.date.fromisoformat(e["date"])
-        except Exception: continue
-        if 0 <= (ed - today).days <= 90: upcoming.append(dict(date=e["date"], name=e["name"], days=(ed - today).days))
-    upcoming.sort(key=lambda e: e["days"])
-    hold = next((e for e in upcoming if e["days"] <= 3), None) if months_left > 1 else None
-    if hold: suggest = 0.0
-    per_g = (out.get("rates") or {}).get("p22_all")
-    gv = next((s["latest"] for s in out["signals"] if s["key"] == "gvz" and s["latest"]), None)
-    sig_m = gv / 100 / math.sqrt(12) if gv else None
-    return dict(target=target, bought=bought, remaining=remaining, finish=str(finish), wedding=str(wd), days_left=days_left,
-                months_left=months_left, base_per_month=base, multiplier=mult, suggest=round(suggest, 1),
-                suggest_cost=None if per_g is None else suggest * per_g, remaining_cost=None if per_g is None else remaining * per_g,
-                per_gram=per_g, hold=hold, upcoming=upcoming[:4],
-                swing_1m=None if (sig_m is None or per_g is None) else remaining * per_g * sig_m,
-                swing_3m=None if (sig_m is None or per_g is None) else remaining * per_g * sig_m * math.sqrt(3))
+# Individual purchase schedules are intentionally omitted from this market-monitoring project.
 
 def odds_from(br):
     now = br["now"]; pick = "All days (baseline)"
@@ -615,13 +636,14 @@ if __name__ == "__main__":
     ibja = ibja_calib(df, ibja_hist) if ibja_hist is not None else None
     out = compute(df, news, cfg, False, ibja)
     out["asia_gold_news"] = safe("Reuters Asia Gold headlines", asia_gold_news) or []
-    out["health"] = [f"{c}: last value {df[c].last_valid_index().date() if df[c].last_valid_index() is not None else 'NONE'}, {int(df[c].iloc[-10:].notna().sum())}/10 recent rows filled" for c in df.columns if c in ("gold","spot","dxy","ry","y2","nom10","be10","vix","spx","oil","gdx","si","cftc","oi","gl_etf","fx","gvz","cnh","sge","sh_prem","asia_ret")]
+    out["data_quality"] = safe("data quality report", lambda: data_quality_report(df, log)) or {"rows": [], "critical_missing": [], "critical_stale": [], "failed_sources": log.copy()}
+    out["diagnostics"] = signal_diagnostics(out)
+    out["health"] = [f"{r['name']}: {r['status']}, last observation {r['last_date'] or 'NONE'}, {r['recent_filled']}/{r['recent_total']} recent rows, {r['coverage']*100:.0f}% coverage" for r in out["data_quality"].get("rows", [])]
     long_g = safe("gold long history (25y) GC=F", lambda: yf_close("GC=F", period="max"))
     out["base_rates"] = safe("25-year base rates", lambda: base_rates(long_g)) if long_g is not None else None
-    out["plan"] = safe("staged-buy plan", lambda: make_plan(out, cfg))
     out["backtest"] = safe("backtest of signals", lambda: backtest(df))
     out["odds"] = safe("odds from history", lambda: odds_from(out["base_rates"])) if out.get("base_rates") else None
     out["confidence"] = confidence_from(out.get("backtest"))
     out["updated_utc"] = dt.datetime.utcnow().strftime("%Y-%m-%d %H:%M"); out["log"] = log
-    (DOCS / "data.json").write_text(json.dumps(out, default=lambda o: None if o is None else str(o)))
+    (DOCS / "data.json").write_text(json.dumps(out, default=lambda o: None if o is None else str(o), indent=2), encoding="utf-8")
     print("\n".join(log)); print("Verdict:", out["verdict"])
