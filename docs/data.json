@@ -1,7 +1,7 @@
 {
   "short": "UNCONFIRMED",
   "msg": "The available indicators do not yet confirm stabilisation.",
-  "trend": "Gold is down 13.7% over the last 2 weeks; it is still making new lows.",
+  "trend": "Gold is down 11.9% over the last 2 weeks; it is still making new lows.",
   "verdict": "WAIT: outlook has not improved yet",
   "overall": 0.2727272727272727,
   "improving": 2,
@@ -46,15 +46,14 @@
       "key": "gold",
       "name": "Gold price",
       "group": "Price & positioning",
-      "latest": 3515.39990234375,
-      "change": -0.1373039862103591,
+      "latest": 3623.60009765625,
+      "change": -0.11930973443765946,
       "score": 0,
       "why": "Stops making lower lows and holds a recovery",
       "fmt": "usd",
       "chg_fmt": "pct",
       "note": "",
       "spark": [
-        4168.3999,
         4179.7002,
         4186.7002,
         4202.2998,
@@ -93,7 +92,8 @@
         3864.2,
         3741.8999,
         3685.5,
-        3515.3999
+        3515.3999,
+        3623.6001
       ],
       "excluded": false
     },
@@ -101,15 +101,14 @@
       "key": "dxy",
       "name": "US dollar",
       "group": "Dollar & rates",
-      "latest": 103.80999755859375,
-      "change": 0.014760454171951265,
+      "latest": 103.83000183105469,
+      "change": 0.021446141391554985,
       "score": 0,
       "why": "Sustained weakening",
       "fmt": "num2",
       "chg_fmt": "pct",
       "note": "",
       "spark": [
-        101.2,
         101.37,
         101.45,
         102.1,
@@ -148,7 +147,8 @@
         103.49,
         103.86,
         103.9,
-        103.81
+        103.81,
+        103.83
       ],
       "excluded": false
     },
@@ -157,14 +157,13 @@
       "name": "US real yields",
       "group": "Dollar & rates",
       "latest": 2.77,
-      "change": 0.14000000000000012,
+      "change": 0.10999999999999988,
       "score": 0,
       "why": "Falling rather than rising",
       "fmt": "pct2",
       "chg_fmt": "pp",
       "note": "",
       "spark": [
-        2.9,
         2.91,
         2.93,
         2.88,
@@ -203,6 +202,7 @@
         2.89,
         2.88,
         2.88,
+        2.77,
         2.77
       ],
       "excluded": false
@@ -222,7 +222,6 @@
         127389.0,
         127389.0,
         127389.0,
-        127389.0,
         120318.0,
         120318.0,
         120318.0,
@@ -258,6 +257,7 @@
         112341.0,
         112341.0,
         112341.0,
+        102942.0,
         102942.0
       ],
       "excluded": false
@@ -277,7 +277,6 @@
         412800.0,
         412800.0,
         412800.0,
-        412800.0,
         406456.0,
         406456.0,
         406456.0,
@@ -313,6 +312,7 @@
         404725.0,
         404725.0,
         404725.0,
+        407834.0,
         407834.0
       ],
       "excluded": false
@@ -366,7 +366,7 @@
         null,
         null,
         null,
-        null,
+        260.3,
         260.3,
         260.3
       ],
@@ -431,15 +431,14 @@
       "key": "fx",
       "name": "USD/INR",
       "group": "India-specific",
-      "latest": 93.29499816894531,
-      "change": -0.00785675004977604,
+      "latest": 92.91000366210938,
+      "change": -0.014091930165270106,
       "score": 1,
       "why": "No sudden rupee weakness",
       "fmt": "num2",
       "chg_fmt": "pct",
       "note": "",
       "spark": [
-        95.7883,
         95.9816,
         96.0507,
         95.9271,
@@ -478,7 +477,8 @@
         93.9631,
         93.4746,
         93.4653,
-        93.295
+        93.295,
+        92.91
       ],
       "excluded": false
     },
@@ -487,14 +487,13 @@
       "name": "Gold volatility (added)",
       "group": "Price & positioning",
       "latest": 34.79999923706055,
-      "change": 0.3727810143347594,
+      "change": 0.3171839188708323,
       "score": 0,
       "why": "Calming: below 1-month average, not rising",
       "fmt": "num1",
       "chg_fmt": "pct",
       "note": "",
       "spark": [
-        24.83,
         24.37,
         23.74,
         23.32,
@@ -533,6 +532,7 @@
         26.46,
         28.04,
         28.7,
+        34.8,
         34.8
       ],
       "excluded": true
@@ -567,7 +567,7 @@
         "High Customs Duty, Ponzi Gold Loans: Why India's Gold Regulation Needs a Reset - The Quint",
         "Customs duty hike takes the shine off organised gold trade; smuggling rises - Business Standard",
         "India gold market update: Gold demand gets festive boost | Post by Kavita Chacko | Insights - World Gold Council",
-        "Gold prices crash 24% globally but fall only 20% in India: Why domestic buyers aren't seeing the full price correction - Livemint"
+        "India\u2019s Gold Imports May Fall to $40 Billion in FY27 After Duty Hike: Commerce Secretary - India Business Trade"
       ],
       "excluded": false
     },
@@ -575,54 +575,54 @@
       "key": "asia_cum",
       "name": "Asia-session gold (early read)",
       "group": "Asia (early read)",
-      "latest": 0.046332641644923234,
-      "change": -0.03250749256887331,
+      "latest": 0.06776130727576368,
+      "change": -0.030963655127943523,
       "score": 0,
       "why": "Gold bid during Tokyo/Shanghai/HK hours",
       "fmt": "pct1",
       "chg_fmt": "pct",
       "note": "Sum of last 10 Asia-session returns (00-08 UTC)",
       "spark": [
-        0.0582,
-        0.0612,
-        0.0633,
-        0.0651,
-        0.0665,
-        0.0708,
-        0.0724,
-        0.0642,
-        0.0667,
-        0.0787,
-        0.0762,
-        0.0803,
-        0.0789,
-        0.0868,
-        0.0945,
-        0.0916,
-        0.0896,
-        0.0921,
-        0.0827,
-        0.0795,
-        0.0826,
-        0.0805,
-        0.0762,
-        0.0682,
-        0.0594,
-        0.0608,
-        0.0503,
-        0.0719,
-        0.0863,
+        0.0735,
+        0.0756,
+        0.0774,
         0.0788,
-        0.0864,
-        0.0799,
-        0.085,
-        0.0815,
-        0.0861,
-        0.075,
-        0.0772,
-        0.0577,
-        0.057,
-        0.0463
+        0.0831,
+        0.0847,
+        0.0765,
+        0.0791,
+        0.091,
+        0.0885,
+        0.0926,
+        0.0912,
+        0.0991,
+        0.1068,
+        0.1039,
+        0.1019,
+        0.1044,
+        0.095,
+        0.0918,
+        0.0949,
+        0.0928,
+        0.0885,
+        0.0805,
+        0.0717,
+        0.0731,
+        0.0626,
+        0.0842,
+        0.0986,
+        0.0911,
+        0.0987,
+        0.0922,
+        0.0973,
+        0.0938,
+        0.0985,
+        0.0873,
+        0.0895,
+        0.07,
+        0.0693,
+        0.0586,
+        0.0678
       ],
       "excluded": false
     },
@@ -630,15 +630,14 @@
       "key": "sh_prem",
       "name": "Shanghai premium (added)",
       "group": "Asia (early read)",
-      "latest": 51.71636532605453,
-      "change": 32.59307105413927,
+      "latest": 29.420156317999954,
+      "change": 14.927696379956615,
       "score": 1,
       "why": "Premium rising / back above zero = Chinese physical demand returning",
       "fmt": "usd1",
       "chg_fmt": "usd",
       "note": "SGE Au99.99 vs international, US$/oz, approximate",
       "spark": [
-        5.8392,
         -19.4802,
         23.4784,
         6.9368,
@@ -677,7 +676,8 @@
         21.2873,
         41.296,
         55.4007,
-        51.7164
+        51.7164,
+        29.4202
       ],
       "excluded": false
     },
@@ -685,15 +685,14 @@
       "key": "cnh",
       "name": "Yuan (USD/CNY, added)",
       "group": "Asia (early read)",
-      "latest": 6.666500091552734,
-      "change": -0.0005846802340979673,
+      "latest": 6.653200149536133,
+      "change": -0.0026682437817997506,
       "score": 0.5,
       "why": "Yuan stable or strengthening supports Chinese gold buying",
       "fmt": "num4",
       "chg_fmt": "pct",
       "note": "",
       "spark": [
-        6.7128,
         6.7103,
         6.703,
         6.7045,
@@ -732,21 +731,22 @@
         6.6642,
         6.6659,
         6.6676,
-        6.6665
+        6.6665,
+        6.6532
       ],
       "excluded": false
     }
   ],
-  "parity": 124898.98240301402,
+  "parity": 128211.96109363702,
   "rates": {
-    "gold_usd": 3515.39990234375,
-    "usdinr": 93.29499816894531,
+    "gold_usd": 3623.60009765625,
+    "usdinr": 92.91000366210938,
     "source": "gold futures",
-    "base24": 10544.447649051415,
-    "p24_ex": 12126.114796409127,
-    "p22_ex": 11325.522273322646,
-    "p22_gst": 11665.287941522325,
-    "p22_all": 11665.287941522325,
+    "base24": 10824.141924325624,
+    "p24_ex": 12447.763212974467,
+    "p22_ex": 11625.934760516686,
+    "p22_gst": 11974.712803332186,
+    "p22_all": 11974.712803332186,
     "duty": 0.15,
     "gst": 0.03,
     "making": 0.0,
@@ -762,7 +762,7 @@
   "n_all": 14,
   "n_excluded": 2,
   "n_nodata": 1,
-  "as_of": "2026-11-20",
+  "as_of": "2026-11-23",
   "lead_lag": [
     {
       "label": "Asia-session gold return",
@@ -794,7 +794,7 @@
       "key": "c_y2",
       "name": "Candidate: US 2-year yield falling",
       "group": "Candidate",
-      "score": 0
+      "score": 0.5
     },
     {
       "key": "c_be",
@@ -822,49 +822,49 @@
     }
   ],
   "context": {
-    "gold": 3515.39990234375,
-    "from_high": -0.3390117390769056,
-    "range_pos": 0.0,
-    "vs50": -0.14485090538780732,
-    "vs200": -0.20907702886968638,
-    "inr": 11325.522273322646,
-    "inr_chg10": -0.14793394119541214,
-    "inr_pos": 0.0
+    "gold": 3623.60009765625,
+    "from_high": -0.3186672374788183,
+    "range_pos": 0.06001120094980588,
+    "vs50": -0.11539593092138689,
+    "vs200": -0.18348757085528966,
+    "inr": 11625.934760516686,
+    "inr_chg10": -0.12862277131773825,
+    "inr_pos": 0.08613723088339041
   },
   "drivers": [
     {
       "name": "US 2-year yield (rate-hike pressure)",
       "unit": "%",
       "latest": 4.63,
-      "change": 0.1200000000000001,
+      "change": 0.07000000000000028,
       "absolute": true
     },
     {
       "name": "10-yr breakeven inflation",
       "unit": "%",
       "latest": 2.15,
-      "change": -0.08000000000000052,
+      "change": -0.06999999999999984,
       "absolute": true
     },
     {
       "name": "Oil (WTI, US$)",
       "unit": "$",
-      "latest": 83.9800033569336,
-      "change": -0.0754155932624796,
+      "latest": 82.61000061035156,
+      "change": -0.04881978052115832,
       "absolute": false
     },
     {
       "name": "S&P 500",
       "unit": "",
       "latest": 6910.39013671875,
-      "change": -0.06323418571150852,
+      "change": -0.08470925724587652,
       "absolute": false
     },
     {
       "name": "VIX (equity stress)",
       "unit": "",
-      "latest": 35.88999938964844,
-      "change": 0.39976600015592045,
+      "latest": 30.09000015258789,
+      "change": 0.5105421705493307,
       "absolute": false
     }
   ],
@@ -878,8 +878,8 @@
       {
         "name": "gold",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -896,8 +896,8 @@
       {
         "name": "dxy",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -905,8 +905,8 @@
       {
         "name": "gvz",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -914,8 +914,8 @@
       {
         "name": "fx",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -923,8 +923,8 @@
       {
         "name": "ry",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -932,8 +932,8 @@
       {
         "name": "y2",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -941,8 +941,8 @@
       {
         "name": "nom10",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -950,8 +950,8 @@
       {
         "name": "vix",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -959,8 +959,8 @@
       {
         "name": "spx",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -968,8 +968,8 @@
       {
         "name": "oil",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -977,8 +977,8 @@
       {
         "name": "gdx",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -986,8 +986,8 @@
       {
         "name": "si",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -995,8 +995,8 @@
       {
         "name": "in_px",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1004,8 +1004,8 @@
       {
         "name": "cnh",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1013,8 +1013,8 @@
       {
         "name": "sge",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1022,8 +1022,8 @@
       {
         "name": "asia_ret",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 0.98
@@ -1032,16 +1032,16 @@
         "name": "us_ret",
         "status": "FRESH",
         "last_date": "2026-11-20",
-        "age_days": 1,
-        "recent_filled": 10,
+        "age_days": 3,
+        "recent_filled": 9,
         "recent_total": 10,
-        "coverage": 0.992
+        "coverage": 0.988
       },
       {
         "name": "cftc",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1049,8 +1049,8 @@
       {
         "name": "oi",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1058,11 +1058,11 @@
       {
         "name": "gl_etf",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
-        "recent_filled": 2,
+        "last_date": "2026-11-23",
+        "age_days": 0,
+        "recent_filled": 3,
         "recent_total": 10,
-        "coverage": 0.008
+        "coverage": 0.012
       },
       {
         "name": "in_etf",
@@ -1076,8 +1076,8 @@
       {
         "name": "asia_cum",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1085,8 +1085,8 @@
       {
         "name": "us_cum",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1094,8 +1094,8 @@
       {
         "name": "be10",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1103,8 +1103,8 @@
       {
         "name": "sh_prem",
         "status": "FRESH",
-        "last_date": "2026-11-20",
-        "age_days": 1,
+        "last_date": "2026-11-23",
+        "age_days": 0,
         "recent_filled": 10,
         "recent_total": 10,
         "coverage": 1.0
@@ -1131,86 +1131,86 @@
     "note": "Signal strength and data reliability are separate. Missing or stale inputs can materially weaken interpretation."
   },
   "health": [
-    "gold: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
+    "gold: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
     "spot: MISSING, last observation NONE, 0/10 recent rows, 0% coverage",
-    "dxy: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "gvz: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "fx: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "ry: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "y2: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "nom10: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "vix: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "spx: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "oil: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "gdx: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "si: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "in_px: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "cnh: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "sge: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "asia_ret: FRESH, last observation 2026-11-20, 10/10 recent rows, 98% coverage",
-    "us_ret: FRESH, last observation 2026-11-20, 10/10 recent rows, 99% coverage",
-    "cftc: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "oi: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "gl_etf: FRESH, last observation 2026-11-20, 2/10 recent rows, 1% coverage",
+    "dxy: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "gvz: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "fx: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "ry: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "y2: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "nom10: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "vix: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "spx: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "oil: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "gdx: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "si: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "in_px: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "cnh: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "sge: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "asia_ret: FRESH, last observation 2026-11-23, 10/10 recent rows, 98% coverage",
+    "us_ret: FRESH, last observation 2026-11-20, 9/10 recent rows, 99% coverage",
+    "cftc: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "oi: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "gl_etf: FRESH, last observation 2026-11-23, 3/10 recent rows, 1% coverage",
     "in_etf: MISSING, last observation NONE, 0/10 recent rows, 0% coverage",
-    "asia_cum: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "us_cum: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "be10: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage",
-    "sh_prem: FRESH, last observation 2026-11-20, 10/10 recent rows, 100% coverage"
+    "asia_cum: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "us_cum: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "be10: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage",
+    "sh_prem: FRESH, last observation 2026-11-23, 10/10 recent rows, 100% coverage"
   ],
   "base_rates": {
     "since": "2000-08-30",
     "now": {
-      "from_high": -0.3390117390769056,
-      "vs200": -0.20907702886968638,
-      "rsi": 24.87832135046422
+      "from_high": -0.31846043589642126,
+      "vs200": -0.1832407509489371,
+      "rsi": 33.959971470214285
     },
     "rows": [
       {
         "name": "All days (baseline)",
-        "days": 6384,
+        "days": 6385,
         "episodes": 1,
         "1 month": {
-          "n": 6363,
-          "median": 0.008053675670142146,
-          "pos": 0.5695426685525695,
-          "p10": -0.04861625258925093,
-          "p90": 0.07022819125415168
+          "n": 6364,
+          "median": 0.00805168151877833,
+          "pos": 0.5694531741043369,
+          "p10": -0.04872012435950817,
+          "p90": 0.07022715916989654
         },
         "3 months": {
-          "n": 6321,
-          "median": 0.028116727065028213,
-          "pos": 0.6394557823129252,
-          "p10": -0.06626278100042593,
-          "p90": 0.1345259128606875
+          "n": 6322,
+          "median": 0.028114889251700803,
+          "pos": 0.6393546346093009,
+          "p10": -0.06640441711284768,
+          "p90": 0.1345153529231575
         },
         "6 months": {
-          "n": 6258,
-          "median": 0.05923098391998205,
-          "pos": 0.7043783956535634,
-          "p10": -0.08650484807632836,
-          "p90": 0.20927426334173282
+          "n": 6259,
+          "median": 0.059131529748363665,
+          "pos": 0.7042658571656815,
+          "p10": -0.08663394188064467,
+          "p90": 0.20923802088314958
         },
         "12 months": {
-          "n": 6132,
-          "median": 0.11539049452651207,
-          "pos": 0.7442922374429224,
-          "p10": -0.07700895287948911,
-          "p90": 0.3689768621462475
+          "n": 6133,
+          "median": 0.11536030563875932,
+          "pos": 0.7441708788521115,
+          "p10": -0.0770324503283776,
+          "p90": 0.36893332001263573
         },
-        "further_drop_median": -0.031565107828454786,
-        "further_drop_worst10": -0.1060613767090274
+        "further_drop_median": -0.031570532383062955,
+        "further_drop_worst10": -0.1061042562276657
       },
       {
         "name": "20%+ below its 1-year high",
-        "days": 332,
+        "days": 333,
         "episodes": 6,
         "1 month": {
-          "n": 311,
-          "median": 0.012410646645795831,
-          "pos": 0.5659163987138264,
-          "p10": -0.06955957370686694,
-          "p90": 0.1095579478322708
+          "n": 312,
+          "median": 0.012083677117045388,
+          "pos": 0.5641025641025641,
+          "p10": -0.06960162297276687,
+          "p90": 0.10951124180331889
         },
         "3 months": {
           "n": 292,
@@ -1233,19 +1233,19 @@
           "p10": -0.09299644322338312,
           "p90": 0.41792035394079036
         },
-        "further_drop_median": -0.04954549635045069,
-        "further_drop_worst10": -0.1316312929230698
+        "further_drop_median": -0.04961573033208577,
+        "further_drop_worst10": -0.13146295997461807
       },
       {
         "name": "10%+ below its 200-day average",
-        "days": 208,
+        "days": 209,
         "episodes": 6,
         "1 month": {
-          "n": 191,
-          "median": 0.03039290433743247,
-          "pos": 0.6387434554973822,
-          "p10": -0.06808937893448819,
-          "p90": 0.1131930280077067
+          "n": 192,
+          "median": 0.0297625453768795,
+          "pos": 0.6354166666666666,
+          "p10": -0.06941255422962907,
+          "p90": 0.11314555179647072
         },
         "3 months": {
           "n": 190,
@@ -1269,7 +1269,7 @@
           "p90": 0.47621362477935364
         },
         "further_drop_median": -0.04910287869729746,
-        "further_drop_worst10": -0.13941973850351683
+        "further_drop_worst10": -0.13884234894386913
       },
       {
         "name": "Oversold (RSI below 30)",
@@ -1308,14 +1308,14 @@
       },
       {
         "name": "20%+ below high AND 10%+ below 200-day",
-        "days": 184,
+        "days": 185,
         "episodes": 4,
         "1 month": {
-          "n": 167,
-          "median": 0.031782968962412506,
-          "pos": 0.6586826347305389,
-          "p10": -0.07004759787968835,
-          "p90": 0.1219722505405062
+          "n": 168,
+          "median": 0.031087936649922487,
+          "pos": 0.6547619047619048,
+          "p10": -0.07138028561376668,
+          "p90": 0.12165905985272728
         },
         "3 months": {
           "n": 166,
@@ -1339,27 +1339,27 @@
           "p90": 0.4902997254080938
         },
         "further_drop_median": -0.04910287869729746,
-        "further_drop_worst10": -0.12939738061184086
+        "further_drop_worst10": -0.12952865821367493
       }
     ]
   },
   "backtest": {
     "days": 190,
     "horizon": 10,
-    "base_avg": -0.012628554994204145,
-    "base_hit": 0.3368421052631579,
+    "base_avg": -0.013516287663833584,
+    "base_hit": 0.33157894736842103,
     "rows": [
       {
         "key": "gold",
         "name": "Gold price",
         "candidate": false,
-        "n_green": 60,
+        "n_green": 61,
         "n_red": 73,
-        "green_avg": -0.003409874787655235,
+        "green_avg": -0.005309872486835633,
         "red_avg": -0.00781915588660304,
-        "green_hit": 0.43333333333333335,
+        "green_hit": 0.4262295081967213,
         "red_hit": 0.3698630136986301,
-        "edge": 0.004409281098947806,
+        "edge": 0.0025092833997674077,
         "verdict": "no clear edge"
       },
       {
@@ -1395,23 +1395,23 @@
         "n_green": 117,
         "n_red": 68,
         "green_avg": -0.015020987527045934,
-        "red_avg": -0.009085020609408507,
+        "red_avg": -0.011565450127490759,
         "green_hit": 0.3162393162393162,
-        "red_hit": 0.36764705882352944,
-        "edge": -0.005935966917637427,
+        "red_hit": 0.35294117647058826,
+        "edge": -0.0034555373995551752,
         "verdict": "no clear edge"
       },
       {
         "key": "oi",
         "name": "COMEX open interest",
         "candidate": false,
-        "n_green": 65,
+        "n_green": 66,
         "n_red": 7,
-        "green_avg": -0.014878361861734185,
+        "green_avg": -0.016460655385611842,
         "red_avg": -0.03290186308534034,
-        "green_hit": 0.27692307692307694,
+        "green_hit": 0.2727272727272727,
         "red_hit": 0.0,
-        "edge": 0.01802350122360616,
+        "edge": 0.0164412076997285,
         "verdict": "too few observations"
       },
       {
@@ -1446,11 +1446,11 @@
         "candidate": false,
         "n_green": 111,
         "n_red": 32,
-        "green_avg": -0.011818263310172135,
+        "green_avg": -0.013337805717645949,
         "red_avg": -0.002842994954907349,
-        "green_hit": 0.36036036036036034,
+        "green_hit": 0.35135135135135137,
         "red_hit": 0.40625,
-        "edge": -0.008975268355264786,
+        "edge": -0.0104948107627386,
         "verdict": "no clear edge"
       },
       {
@@ -1498,24 +1498,24 @@
         "candidate": false,
         "n_green": 98,
         "n_red": 74,
-        "green_avg": -0.011234712747351137,
+        "green_avg": -0.01295582710683678,
         "red_avg": -0.011431397425947964,
-        "green_hit": 0.3877551020408163,
+        "green_hit": 0.37755102040816324,
         "red_hit": 0.2972972972972973,
-        "edge": 0.0001966846785968271,
+        "edge": -0.0015244296808888166,
         "verdict": "no clear edge"
       },
       {
         "key": "sh_prem",
         "name": "Shanghai premium (added)",
         "candidate": false,
-        "n_green": 93,
-        "n_red": 93,
-        "green_avg": -0.009246691936467289,
-        "red_avg": -0.01626232928661682,
-        "green_hit": 0.3655913978494624,
-        "red_hit": 0.3118279569892473,
-        "edge": 0.007015637350149531,
+        "n_green": 94,
+        "n_red": 92,
+        "green_avg": -0.010417575367331035,
+        "red_avg": -0.016975609743992367,
+        "green_hit": 0.3617021276595745,
+        "red_hit": 0.30434782608695654,
+        "edge": 0.006558034376661331,
         "verdict": "no clear edge"
       },
       {
@@ -1535,13 +1535,13 @@
         "key": "c_miners",
         "name": "Candidate: gold miners beating gold",
         "candidate": true,
-        "n_green": 67,
-        "n_red": 86,
-        "green_avg": -0.006161666861688015,
-        "red_avg": -0.020234953702281136,
-        "green_hit": 0.373134328358209,
-        "red_hit": 0.313953488372093,
-        "edge": 0.01407328684059312,
+        "n_green": 68,
+        "n_red": 85,
+        "green_avg": -0.007825609031922889,
+        "red_avg": -0.02105371166103661,
+        "green_hit": 0.36764705882352944,
+        "red_hit": 0.3058823529411765,
+        "edge": 0.013228102629113721,
         "verdict": "no clear edge"
       },
       {
@@ -1551,11 +1551,11 @@
         "n_green": 52,
         "n_red": 93,
         "green_avg": -0.023018571462656297,
-        "red_avg": -0.0069765282828859795,
+        "red_avg": -0.008790175672451498,
         "green_hit": 0.25,
-        "red_hit": 0.40860215053763443,
-        "edge": -0.016042043179770316,
-        "verdict": "backwards"
+        "red_hit": 0.3978494623655914,
+        "edge": -0.014228395790204799,
+        "verdict": "no clear edge"
       },
       {
         "key": "c_y2",
@@ -1563,11 +1563,11 @@
         "candidate": true,
         "n_green": 24,
         "n_red": 67,
-        "green_avg": -0.008417086565499965,
+        "green_avg": -0.01544497020006635,
         "red_avg": -0.01884473221504082,
-        "green_hit": 0.375,
+        "green_hit": 0.3333333333333333,
         "red_hit": 0.2537313432835821,
-        "edge": 0.010427645649540856,
+        "edge": 0.003399762014974472,
         "verdict": "no clear edge"
       },
       {
@@ -1575,25 +1575,25 @@
         "name": "Candidate: breakeven inflation rising",
         "candidate": true,
         "n_green": 37,
-        "n_red": 42,
+        "n_red": 43,
         "green_avg": -0.03423459922885639,
-        "red_avg": -0.021311860673399137,
+        "red_avg": -0.023590880993498216,
         "green_hit": 0.24324324324324326,
-        "red_hit": 0.30952380952380953,
-        "edge": -0.012922738555457253,
+        "red_hit": 0.3023255813953488,
+        "edge": -0.010643718235358174,
         "verdict": "no clear edge"
       },
       {
         "key": "c_oil",
         "name": "Candidate: oil falling",
         "candidate": true,
-        "n_green": 59,
-        "n_red": 86,
-        "green_avg": -0.020868221436827122,
-        "red_avg": -0.011722469296811458,
-        "green_hit": 0.2711864406779661,
-        "red_hit": 0.38372093023255816,
-        "edge": -0.009145752140015664,
+        "n_green": 60,
+        "n_red": 85,
+        "green_avg": -0.02250891332017433,
+        "red_avg": -0.012441080380208464,
+        "green_hit": 0.26666666666666666,
+        "red_hit": 0.3764705882352941,
+        "edge": -0.010067832939965866,
         "verdict": "no clear edge"
       },
       {
@@ -1601,12 +1601,12 @@
         "name": "Candidate: VIX (stress) falling",
         "candidate": true,
         "n_green": 37,
-        "n_red": 45,
+        "n_red": 44,
         "green_avg": -0.006573620547974376,
-        "red_avg": -0.021322541442264586,
+        "red_avg": -0.022928950856678187,
         "green_hit": 0.32432432432432434,
-        "red_hit": 0.37777777777777777,
-        "edge": 0.01474892089429021,
+        "red_hit": 0.36363636363636365,
+        "edge": 0.01635533030870381,
         "verdict": "no clear edge"
       },
       {
@@ -1651,7 +1651,7 @@
     "p12": 0.44025157232704404,
     "med3": 0.022147803732301186,
     "med12": -0.014279115564677314,
-    "days": 184,
+    "days": 185,
     "episodes": 4
   },
   "confidence": {
@@ -1659,7 +1659,7 @@
     "helps": 0,
     "tested": 8
   },
-  "updated_utc": "2026-11-21 15:48",
+  "updated_utc": "2026-11-23 11:01",
   "log": [
     "OK   gold GC=F",
     "FAIL spot gold XAUUSD=X: ValueError: empty series",
