@@ -1659,7 +1659,7 @@
     "helps": 0,
     "tested": 8
   },
-  "updated_utc": "2026-11-28 10:45",
+  "updated_utc": "2026-11-28 16:31",
   "log": [
     "OK   gold GC=F",
     "FAIL spot gold XAUUSD=X: ValueError: empty series",
